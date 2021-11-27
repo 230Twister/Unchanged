@@ -78,7 +78,7 @@ vec3 getDirectionLight() {
 
     // Âþ·´Éä
     vec3 normal = normalize(Normal);
-    vec3 lightDir = vec3(0.0f, 1.0f, 1.0f);
+    vec3 lightDir = direction_light.direction;
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = direction_light.diffuse * (diff * model_diffuse);
 

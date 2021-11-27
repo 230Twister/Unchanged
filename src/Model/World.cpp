@@ -1,9 +1,10 @@
 #include "Model/World.h"
 
-World::World() {
+World::World(const char* world_obj) {
     sunLightDirection = glm::vec3(1.0f, 0.3f, 0.0f);
     shadowMappingShader = new Shader("ShadowMappingVert.vs", "ShadowMappingFrag.frag");
     modelShader = new Shader("ModelVert.vs", "ModelFrag.frag");
+    model = new Model(world_obj);
 
     camera = new Camera();
     loadDepthMap();
@@ -61,7 +62,7 @@ void World::renderDepthMap() {
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     renderObjects(shadowMappingShader);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);        
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 /**
@@ -99,11 +100,13 @@ void World::render() {
  * @brief 渲染世界中的所有模型
  * @param shader 渲染使用的着色器
 */
-void World::renderObjects(const Shader* shader) {
-    // to-do
+void World::renderObjects(Shader* shader) {
+    model->Draw(*shader);
 }
 
 World::~World() {
     delete shadowMappingShader;
     delete modelShader;
+    delete camera;
+    delete model;
 }
