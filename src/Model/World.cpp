@@ -2,7 +2,7 @@
 #include "Model/World.h"
 
 World::World(const char* world_obj) {
-    sunLightDirection = glm::vec3(20.0f, 2.0f, 0.0f);
+    sunLightDirection = glm::vec3(50.0f, 20.0f, 0.0f);
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
     model = new Model(world_obj);
@@ -41,9 +41,10 @@ void World::loadDepthMap() {
 */
 void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
-    float near_plane = 1.0f, far_plane = 50.5f;
-    lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
-    lightView = glm::lookAt(sunLightDirection, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
+    float near_plane = 0.1f, far_plane = 200.0f;
+    lightProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, near_plane, far_plane);
+    glm::vec3 light_pos = camera->Position + glm::vec3(0.0f, 30.0f, 0.0f) + sunLightDirection;
+    lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
     lightSpaceMatrix = lightProjection * lightView;
 }
 
@@ -89,7 +90,7 @@ void World::render() {
 
     modelShader->setVec3("viewPos", camera->Position);
     modelShader->setVec3("direction_light.direction", sunLightDirection);
-    modelShader->setVec3("direction_light.ambient", glm::vec3(0.5f, 0.5f, 0.5f));
+    modelShader->setVec3("direction_light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
     modelShader->setVec3("direction_light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
     modelShader->setVec3("direction_light.specular", glm::vec3(0.7f, 0.7f, 0.7f));
 
