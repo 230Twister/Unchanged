@@ -3,8 +3,8 @@
 
 World::World(const char* world_obj) {
     sunLightDirection = glm::vec3(20.0f, 2.0f, 0.0f);
-    shadowMappingShader = new Shader("ShadowMappingVert.vs", "ShadowMappingFrag.frag");
-    modelShader = new Shader("ModelVert.vs", "ModelFrag.frag");
+    shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
+    modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
     model = new Model(world_obj);
 
     camera = new Camera(glm::vec3(20.0f, 2.0f, 0.0f));
@@ -41,8 +41,8 @@ void World::loadDepthMap() {
 */
 void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
-    float near_plane = 1.0f, far_plane = 7.5f;
-    lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
+    float near_plane = 1.0f, far_plane = 50.5f;
+    lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, near_plane, far_plane);
     lightView = glm::lookAt(sunLightDirection, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
     lightSpaceMatrix = lightProjection * lightView;
 }
@@ -61,6 +61,7 @@ void World::renderDepthMap() {
     // ‰÷»æ…Ó∂»Ã˘Õº
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

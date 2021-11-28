@@ -43,9 +43,9 @@ float caculateShadow(vec3 lightDir) {
     projCoords = projCoords * 0.5 + 0.5;
 
     // 比对当前片段深度与深度贴图上的深度值
-    float closestDepth = texture(texture_shadowMap, projCoords.xy).r; 
+    float closestDepth = texture(texture_shadowMap, projCoords.xy).r;
     float currentDepth = projCoords.z;
-    float bias = max(0.05 * (1.0 - dot(Normal, lightDir)), 0.005);
+    float bias = max(0.05 * (1.0 - dot(normalize(Normal), lightDir)), 0.005);
     float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
 
     return shadow;
