@@ -8,7 +8,7 @@
 class World{
 private:
 	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;	// 定义深度贴图分辨率	
-	const unsigned int SCR_WIDTH = 800, SCR_HEIGHT = 600;			//定义窗口大小
+	const unsigned int SCR_WIDTH = 1200, SCR_HEIGHT = 800;			//定义窗口大小
 
 	Model* model;
 
@@ -39,6 +39,7 @@ public:
 	}
 
 	void setTime(unsigned int);		// 设置时间
+	unsigned int getTime();
 
 	~World();
 };

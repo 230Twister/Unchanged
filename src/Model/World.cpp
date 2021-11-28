@@ -110,6 +110,26 @@ void World::renderObjects(Shader* shader) {
     model->Draw(*shader);
 }
 
+/**
+ * @brief 更改世界时间
+ * @param time 时间0-18000
+*/
+void World::setTime(unsigned int time) {
+    this->time = time % 1296000;
+
+    glm::mat4 rotation = glm::mat4(1.0f);
+    rotation = glm::rotate(rotation, glm::radians(time / 3600.0f), glm::vec3(0.0, 0.0, 1.0));
+    sunLightDirection = glm::vec3(rotation * glm::vec4(sunLightDirection, 1.0f));
+}
+
+/**
+ * @brief 获取世界时间
+ * @return 时间
+*/
+unsigned int World::getTime() {
+    return time;
+}
+
 World::~World() {
     delete shadowMappingShader;
     delete modelShader;

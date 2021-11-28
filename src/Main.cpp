@@ -28,7 +28,7 @@ float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
 // 窗口大小
-const GLuint WIDTH = 800, HEIGHT = 600;
+const GLuint WIDTH = 1200, HEIGHT = 800;
 
 int main() {
 	// 初始化 GLFW
@@ -77,6 +77,7 @@ int main() {
 
 		processInput(window);
 
+		//world.setTime(glfwGetTime());
 		world.renderDepthMap();
 		world.render();
 
