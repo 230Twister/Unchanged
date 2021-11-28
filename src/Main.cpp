@@ -64,7 +64,7 @@ int main() {
 	// 设置深度测试
 	glEnable(GL_DEPTH_TEST);
 
-	World world("E:/ComputerGraphic/model/House01/House01.obj");
+	World world("../../../world_model/models.obj");
 	camera = world.getCamera();
 
 	// 主循环

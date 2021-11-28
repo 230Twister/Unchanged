@@ -7,7 +7,7 @@ World::World(const char* world_obj) {
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
     model = new Model(world_obj);
 
-    camera = new Camera(glm::vec3(20.0f, 2.0f, 0.0f));
+    camera = new Camera(glm::vec3(0.0f, 0.0f, 0.0f));
     loadDepthMap();
 }
 
@@ -89,7 +89,7 @@ void World::render() {
 
     modelShader->setVec3("viewPos", camera->Position);
     modelShader->setVec3("direction_light.direction", sunLightDirection);
-    modelShader->setVec3("direction_light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+    modelShader->setVec3("direction_light.ambient", glm::vec3(0.5f, 0.5f, 0.5f));
     modelShader->setVec3("direction_light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
     modelShader->setVec3("direction_light.specular", glm::vec3(0.7f, 0.7f, 0.7f));
 
