@@ -78,7 +78,7 @@ vec3 getDirectionLight() {
 
     // 漫反射
     vec3 normal = normalize(Normal);
-    vec3 lightDir = direction_light.direction;
+    vec3 lightDir = normalize(direction_light.direction);
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = direction_light.diffuse * (diff * model_diffuse);
 
@@ -89,7 +89,7 @@ vec3 getDirectionLight() {
     vec3 specular = direction_light.specular * (spec * model_specular);
 
     // 计算阴影
-    float shadow = (1.0 - caculateShadow(direction_light.direction));
+    float shadow = (1.0 - caculateShadow(lightDir));
 
     return shadow * (diffuse + specular);
 }
@@ -124,6 +124,6 @@ void main()
     // 环境光
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    vec3 result = ambient + getPointLight() + getDirectionLight() + getSpotLight();
+    vec3 result = ambient + getDirectionLight();
     FragColor = vec4(result, 1.0f);
 }

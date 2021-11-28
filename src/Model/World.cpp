@@ -1,12 +1,13 @@
+#define STB_IMAGE_IMPLEMENTATION
 #include "Model/World.h"
 
 World::World(const char* world_obj) {
-    sunLightDirection = glm::vec3(1.0f, 0.3f, 0.0f);
+    sunLightDirection = glm::vec3(20.0f, 2.0f, 0.0f);
     shadowMappingShader = new Shader("ShadowMappingVert.vs", "ShadowMappingFrag.frag");
     modelShader = new Shader("ModelVert.vs", "ModelFrag.frag");
     model = new Model(world_obj);
 
-    camera = new Camera();
+    camera = new Camera(glm::vec3(20.0f, 2.0f, 0.0f));
     loadDepthMap();
 }
 
@@ -19,7 +20,6 @@ void World::loadDepthMap() {
     glGenFramebuffers(1, &depthMapFBO);
 
     // 创建2D纹理
-    unsigned int depthMap;
     glGenTextures(1, &depthMap);
     glBindTexture(GL_TEXTURE_2D, depthMap);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -42,7 +42,7 @@ void World::loadDepthMap() {
 void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
     float near_plane = 1.0f, far_plane = 7.5f;
-    lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, near_plane, far_plane);
+    lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, near_plane, far_plane);
     lightView = glm::lookAt(sunLightDirection, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
     lightSpaceMatrix = lightProjection * lightView;
 }
@@ -89,8 +89,12 @@ void World::render() {
     modelShader->setVec3("viewPos", camera->Position);
     modelShader->setVec3("direction_light.direction", sunLightDirection);
     modelShader->setVec3("direction_light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-    modelShader->setVec3("direction_light.diffuse", glm::vec3(0.5f, 0.5f, 0.5f));
+    modelShader->setVec3("direction_light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
     modelShader->setVec3("direction_light.specular", glm::vec3(0.7f, 0.7f, 0.7f));
+
+    glActiveTexture(GL_TEXTURE0 + 2);
+    modelShader->setInt("texture_shadowMap", 2);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
 
     // 绘制场景
     renderObjects(modelShader);

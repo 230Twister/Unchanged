@@ -19,6 +19,7 @@ private:
 	Shader* modelShader;			// 模型渲染着色器
 	Shader* shadowMappingShader;	// 深度贴图着色器
 
+	unsigned int depthMap;			// 深度贴图
 	unsigned int depthMapFBO;		// 深度帧缓冲
 
 	Camera* camera;					// 摄像机
@@ -32,6 +33,10 @@ public:
 	void loadDepthMap();
 	void renderDepthMap();
 	void render();
+
+	Camera* getCamera() {
+		return camera;
+	}
 
 	void setTime(unsigned int);		// 设置时间
 
