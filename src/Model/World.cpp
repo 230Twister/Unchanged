@@ -5,6 +5,7 @@ World::World(const char* world_obj) {
     sunLightDirection = glm::vec3(50.0f, 20.0f, 0.0f);
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
+    skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
     model = new Model(world_obj);
 
     camera = new Camera(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -79,7 +80,7 @@ void World::render() {
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     modelShader->use();
-    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 500.0f);
     glm::mat4 view = camera->GetViewMatrix();
 
     // 传递Uniform数据
@@ -100,6 +101,15 @@ void World::render() {
 
     // 绘制场景
     renderObjects(modelShader);
+
+    
+    // 传递天空盒数据
+    glDepthFunc(GL_LEQUAL);
+    skyboxShader->use();
+    view = glm::mat4(glm::mat3(camera->GetViewMatrix()));
+    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 200.0f);
+    skyboxShader->setMat4("view", view);
+    skyboxShader->setMat4("projection", projection);
 }
 
 /**

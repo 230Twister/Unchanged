@@ -18,6 +18,8 @@ private:
 
 	Shader* modelShader;			// 模型渲染着色器
 	Shader* shadowMappingShader;	// 深度贴图着色器
+	Shader* skyboxShader;			// 天空盒着色器
+
 
 	unsigned int depthMap;			// 深度贴图
 	unsigned int depthMapFBO;		// 深度帧缓冲
