@@ -2,7 +2,7 @@
 #include "Model/World.h"
 
 World::World(const char* world_obj) {
-    sunLightDirection = glm::vec3(50.0f, 20.0f, 0.0f);
+    sunLightDirection = glm::vec3(100.0f, 40.0f, 0.0f);
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
     skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
@@ -56,8 +56,8 @@ void World::calculateLightSpaceMatrix() {
  * @brief 渲染深度贴图
 */
 void World::renderDepthMap() {
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
 
     // 计算光空间转换矩阵
     calculateLightSpaceMatrix();
@@ -73,8 +73,8 @@ void World::renderDepthMap() {
     renderObjects(shadowMappingShader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    //glCullFace(GL_BACK);
-    //glDisable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
 }
 
 /**
