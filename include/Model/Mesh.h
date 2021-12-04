@@ -46,6 +46,9 @@ public:
     // render the mesh
     void Draw(Shader& shader);
 
+    const vector<Vertex>& getVertices() const;
+    const vector<unsigned int>& getIndices() const;
+
 private:
     // mesh Data
     vector<Vertex>       vertices;

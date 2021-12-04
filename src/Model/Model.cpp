@@ -153,6 +153,10 @@ vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type,
 	return textures;
 }
 
+const vector<Mesh>& Model::getMesh() {
+	return meshes;
+}
+
 unsigned int TextureFromFile(const char* path, const string& directory, bool gamma) {
 	string filename = string(path);
 	filename = directory + '/' + filename;

@@ -14,11 +14,15 @@ find_package(assimp CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
+include_directories(${BULLET_INCLUDE_DIRS})
+find_package(Bullet CONFIG REQUIRED)
 
 include_directories(./include)              #头文件位置
 aux_source_directory(./src DIR_TOOT_SRCS)
 aux_source_directory(./src/Model DIR_TOOT_SRCS)
 aux_source_directory(./src/Game DIR_TOOT_SRCS)
+aux_source_directory(./src/Event DIR_TOOT_SRCS)
+aux_source_directory(./src/Skybox DIR_TOOT_SRCS)
 
 # 将源代码添加到此项目的可执行文件。
 add_executable (${PROJECT_NAME} ${DIR_TOOT_SRCS})
@@ -26,5 +30,6 @@ add_executable (${PROJECT_NAME} ${DIR_TOOT_SRCS})
 target_link_libraries(${PROJECT_NAME} PRIVATE glad::glad)
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${BULLET_LIBRARIES})
 
 # TODO: 如有需要，请添加测试并安装目标。

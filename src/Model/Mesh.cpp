@@ -45,6 +45,14 @@ void Mesh::Draw(Shader& shader) {
     glActiveTexture(GL_TEXTURE0);
 }
 
+const vector<Vertex>& Mesh::getVertices() const {
+    return vertices;
+}
+
+const vector<unsigned int>& Mesh::getIndices() const {
+    return indices;
+}
+
 void Mesh::setupMesh() {
     // create buffers/arrays
     glGenVertexArrays(1, &VAO);

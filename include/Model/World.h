@@ -20,6 +20,9 @@ private:
 	Shader* shadowMappingShader;	// 深度贴图着色器
 	Shader* skyboxShader;			// 天空盒着色器
 
+	unsigned int skyboxVAO;
+	unsigned int skyboxVBO;
+	unsigned int cubemapTexture;
 
 	unsigned int depthMap;			// 深度贴图
 	unsigned int depthMapFBO;		// 深度帧缓冲
@@ -28,18 +31,23 @@ private:
 
 	void calculateLightSpaceMatrix();
 	void renderObjects(Shader*);
+	void renderSkybox();
+	void loadDepthMap();
+	void loadSkybox();
 public:
 	World(const char*);
 
 	// 渲染的相关函数
-	void loadDepthMap();
 	void renderDepthMap();
 	void render();
+
+	Model* getBaseModel();
 
 	Camera* getCamera() {
 		return camera;
 	}
 
+	void setCamera(Camera*);
 	void setTime(unsigned int);		// 设置时间
 	unsigned int getTime();
 
