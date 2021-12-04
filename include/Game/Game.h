@@ -1,8 +1,31 @@
 #ifndef GAME_H
 #define GAME_H
 
-class Game {
+#include "Model/World.h"
+#include "PhysicsWorld.h"
+#include "Model/Player.h"
+#include "Event/ListenerManager.h"
+#include <GLFW/glfw3.h>
 
+class Game {
+private:
+	World* world;
+	PhysicsWorld* physics;
+	Player* player;
+
+	ListenerManager listenerManager;
+
+	float deltaTime = 0.0f;
+	float lastFrame = 0.0f;
+public:
+	void init();
+
+	void processInput(GLFWwindow*);
+	void loop();
+	Camera* getCamera() {
+		return player->getCamera();
+	}
+	~Game();
 };
 
 #endif

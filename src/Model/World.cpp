@@ -1,15 +1,38 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "Model/World.h"
+#include "Game/PhysicsWorld.h"
+
+extern float skyboxVertices[108];
+extern unsigned int loadCubemap(vector<std::string>);
+extern std::vector<std::string> faces;
 
 World::World(const char* world_obj) {
-    sunLightDirection = glm::vec3(50.0f, 20.0f, 0.0f);
+    sunLightDirection = glm::vec3(100.0f, 40.0f, 0.0f);
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
     skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
     model = new Model(world_obj);
 
-    camera = new Camera(glm::vec3(103.0f, 8.0f, 30.0f));
     loadDepthMap();
+    loadSkybox();
+}
+
+/**
+ * @brief 加载天空盒
+*/
+void World::loadSkybox() {
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 108, &skyboxVertices, GL_STATIC_DRAW);
+    
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glBindVertexArray(0);
+
+    cubemapTexture = loadCubemap(faces);
 }
 
 /**
@@ -30,7 +53,6 @@ void World::loadDepthMap() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
 
     // 创建帧缓冲并绑定深度贴图
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -56,8 +78,8 @@ void World::calculateLightSpaceMatrix() {
  * @brief 渲染深度贴图
 */
 void World::renderDepthMap() {
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
 
     // 计算光空间转换矩阵
     calculateLightSpaceMatrix();
@@ -73,8 +95,8 @@ void World::renderDepthMap() {
     renderObjects(shadowMappingShader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    //glCullFace(GL_BACK);
-    //glDisable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
 }
 
 /**
@@ -122,7 +144,6 @@ void World::render() {
     // 绘制场景
     renderObjects(modelShader);
 
-    
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
     skyboxShader->use();
@@ -130,6 +151,9 @@ void World::render() {
     projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 200.0f);
     skyboxShader->setMat4("view", view);
     skyboxShader->setMat4("projection", projection);
+
+    // 渲染天空盒
+    renderSkybox();
 }
 
 /**
@@ -138,6 +162,23 @@ void World::render() {
 */
 void World::renderObjects(Shader* shader) {
     model->Draw(*shader);
+}
+
+/**
+ * @brief 渲染天空盒
+*/
+void World::renderSkybox() {
+    glBindVertexArray(skyboxVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+
+    glDepthFunc(GL_LESS);
+}
+
+void World::setCamera(Camera* camera) {
+    this->camera = camera;
 }
 
 /**
@@ -160,9 +201,18 @@ unsigned int World::getTime() {
     return time;
 }
 
+/**
+ * @brief 获取世界基础模型
+ * @return 模型
+*/
+Model* World::getBaseModel() {
+    return model;
+}
+
 World::~World() {
     delete shadowMappingShader;
     delete modelShader;
-    delete camera;
+    delete skyboxShader;
+
     delete model;
 }

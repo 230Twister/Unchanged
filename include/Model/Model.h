@@ -34,6 +34,8 @@ public:
     // draws the model, and thus all its meshes
     void Draw(Shader& shader);
 
+    const vector<Mesh>& getMesh();
+
 private:
     // 模型数据
     vector<Texture> textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
