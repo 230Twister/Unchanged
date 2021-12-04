@@ -8,7 +8,7 @@ World::World(const char* world_obj) {
     skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
     model = new Model(world_obj);
 
-    camera = new Camera(glm::vec3(0.0f, 0.0f, 0.0f));
+    camera = new Camera(glm::vec3(103.0f, 8.0f, 30.0f));
     loadDepthMap();
 }
 
@@ -89,7 +89,7 @@ void World::render() {
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     modelShader->use();
-    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 500.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
     glm::mat4 view = camera->GetViewMatrix();
 
     // ´«µÝUniformÊý¾Ý
@@ -101,8 +101,19 @@ void World::render() {
     modelShader->setVec3("viewPos", camera->Position);
     modelShader->setVec3("direction_light.direction", sunLightDirection);
     modelShader->setVec3("direction_light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-    modelShader->setVec3("direction_light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
+    modelShader->setVec3("direction_light.diffuse", glm::vec3(0.9f, 0.9f, 0.9f));
     modelShader->setVec3("direction_light.specular", glm::vec3(0.7f, 0.7f, 0.7f));
+
+    modelShader->setVec3("spot_light.position", camera->Position);
+    modelShader->setVec3("spot_light.direction", camera->Front);
+    modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
+    modelShader->setVec3("spot_light.diffuse", 1.0f, 1.0f, 1.0f);
+    modelShader->setVec3("spot_light.specular", 1.0f, 1.0f, 1.0f);
+    modelShader->setFloat("spot_light.constant", 1.0f);
+    modelShader->setFloat("spot_light.linear", 0.09);
+    modelShader->setFloat("spot_light.quadratic", 0.032);
+    modelShader->setFloat("spot_light.cutOff", glm::cos(glm::radians(12.5f)));
+    modelShader->setFloat("spot_light.outerCutOff", glm::cos(glm::radians(15.0f)));
 
     glActiveTexture(GL_TEXTURE0 + 2);
     modelShader->setInt("texture_shadowMap", 2);
