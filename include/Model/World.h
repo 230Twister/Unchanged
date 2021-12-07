@@ -4,6 +4,8 @@
 #include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
+#include "Sun.h"
+#include "Moon.h"
 
 class World{
 private:
@@ -12,17 +14,29 @@ private:
 
 	Model* model;
 
-	unsigned int time;
+	Sun* sun;
+	Moon* moon;
+
+	unsigned int time;				// 当前时间
+	static const int dayTime = 1800; // 一天的时间
+	static const int day = dayTime / 2;
 	glm::vec3 sunLightDirection;	// 太阳光方向向量
 	glm::mat4 lightSpaceMatrix;		// 光空间转换矩阵
 
 	Shader* modelShader;			// 模型渲染着色器
 	Shader* shadowMappingShader;	// 深度贴图着色器
 	Shader* skyboxShader;			// 天空盒着色器
+	Shader* sunShader;				// 太阳着色器
+	Shader* moonShader;				// 月亮着色器
 
 	unsigned int skyboxVAO;
 	unsigned int skyboxVBO;
 	unsigned int cubemapTexture;
+
+	unsigned int sunVAO;
+	unsigned int sunVBO;
+	unsigned int moonVAO;
+	unsigned int moonVBO;
 
 	unsigned int depthMap;			// 深度贴图
 	unsigned int depthMapFBO;		// 深度帧缓冲
@@ -31,9 +45,13 @@ private:
 
 	void calculateLightSpaceMatrix();
 	void renderObjects(Shader*);
+	void renderSun(Shader*);
+	void renderMoon(Shader*);
 	void renderSkybox();
 	void loadDepthMap();
 	void loadSkybox();
+	void loadSun();
+	void loadMoon();
 public:
 	World(const char*);
 
