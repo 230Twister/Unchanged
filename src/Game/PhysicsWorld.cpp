@@ -10,6 +10,32 @@ PhysicsWorld::PhysicsWorld() {
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));        // 设置重力加速度 Y向下
 }
 
+void PhysicsWorld::addMoveingRigidBody(Model* model, btScalar mass, btVector3 orgin) {
+
+    // 建立碰撞形状
+    btCollisionShape* modelShape = new btBoxShape(btVector3(btScalar(1.5), btScalar(1.5), btScalar(1.5)));
+    collisionShapes.push_back(modelShape);
+
+    // 建立变换矩阵
+    btTransform modelTransform;
+    modelTransform.setIdentity();
+    modelTransform.setOrigin(orgin);        // 设置原点位置
+
+    btVector3 localInertia(0, 0, 0);        // 惯性
+    bool isDynamic = (mass != 0.f);
+    if (isDynamic)
+        modelShape->calculateLocalInertia(mass, localInertia);
+
+    // 运动状态
+    btDefaultMotionState* myMotionState = new btDefaultMotionState(modelTransform);
+    // 刚体构造信息
+    btRigidBody::btRigidBodyConstructionInfo  rbInfo(mass, myMotionState, modelShape, localInertia);
+    btRigidBody* body = new btRigidBody(rbInfo);
+
+    // 将刚体添加至动态世界中
+    dynamicsWorld->addRigidBody(body);
+}
+
 void PhysicsWorld::addRigidBody(Model* model) {
     btTriangleIndexVertexArray* meshInterface = new btTriangleIndexVertexArray();
     const vector<Mesh>& meshes = model->getMesh();
@@ -25,6 +51,7 @@ void PhysicsWorld::addRigidBody(Model* model) {
             btvertices->push_back(v.Position.y);
             btvertices->push_back(v.Position.z);
         }
+        meshVertices.push_back(btvertices);
 
         btIndexedMesh part;
 
@@ -48,7 +75,7 @@ void PhysicsWorld::addRigidBody(Model* model) {
     modelTransform.setIdentity();
     modelTransform.setOrigin(btVector3(0, 0, 0));        // 设置原点位置
 
-    btScalar mass(0.);                      // 质量
+    btScalar mass(0.0f);
     btVector3 localInertia(0, 0, 0);        // 惯性
 
     // 运动状态
@@ -67,6 +94,10 @@ PhysicsWorld::~PhysicsWorld() {
         btCollisionShape* shape = collisionShapes[j];
         collisionShapes[j] = 0;
         delete shape;
+    }
+
+    for (std::vector<float>* vertices : meshVertices) {
+        delete vertices;
     }
 
     //清理动态世界

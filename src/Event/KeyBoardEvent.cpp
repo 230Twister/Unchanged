@@ -3,19 +3,14 @@
 
 HandleList KeyBoardEvent::handleList;
 
-KeyBoardEvent::KeyBoardEvent(World* _world, Player* _player, int _key, float _delta) {
+KeyBoardEvent::KeyBoardEvent(World* _world, int _key, float _delta) {
 	world = _world;
-	player = _player;
 	key = _key;
 	deltaTime = _delta;
 }
 
 World* KeyBoardEvent::getWorld() {
 	return world;
-}
-
-Player* KeyBoardEvent::getPlayer() {
-	return player;
 }
 
 int KeyBoardEvent::getKey() {

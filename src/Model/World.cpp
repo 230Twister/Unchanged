@@ -1,6 +1,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "Model/World.h"
 #include "Game/PhysicsWorld.h"
+#include "Model/Player.h"
 
 extern float skyboxVertices[108];
 extern unsigned int loadCubemap(vector<std::string>);
@@ -137,6 +138,7 @@ void World::renderDepthMap() {
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShader);
+    player->render(shadowMappingShader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glCullFace(GL_BACK);
@@ -159,7 +161,7 @@ void World::render() {
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     modelShader->use();
-    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 2000.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 600.0f);
     glm::mat4 view = camera->GetViewMatrix();
 
     // 传递Uniform数据
@@ -219,12 +221,13 @@ void World::render() {
 
     // 绘制场景
     renderObjects(modelShader);
+    player->render(modelShader);
 
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
     skyboxShader->use();
     view = glm::mat4(glm::mat3(camera->GetViewMatrix()));
-    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 2000.0f);
+    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 600.0f);
     skyboxShader->setMat4("view", view);
     skyboxShader->setMat4("projection", projection);
 
@@ -303,6 +306,13 @@ void World::renderSkybox() {
     glBindVertexArray(0);
 
     glDepthFunc(GL_LESS);
+}
+
+/**
+ * @brief 给世界添加实体
+*/
+void World::addEntity(Player* player) {
+    this->player = player;
 }
 
 void World::setCamera(Camera* camera) {
