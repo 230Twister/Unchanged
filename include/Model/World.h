@@ -5,12 +5,15 @@
 #include "Camera.h"
 #include "Model.h"
 
+class Player;
+
 class World{
 private:
 	const unsigned int SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;	// 定义深度贴图分辨率	
 	const unsigned int SCR_WIDTH = 1200, SCR_HEIGHT = 800;			//定义窗口大小
 
 	Model* model;
+	Player* player;
 
 	unsigned int time;
 	glm::vec3 sunLightDirection;	// 太阳光方向向量
@@ -42,9 +45,13 @@ public:
 	void render();
 
 	Model* getBaseModel();
+	void addEntity(Player*);
 
 	Camera* getCamera() {
 		return camera;
+	}
+	Player* getPlayer() {
+		return player;
 	}
 
 	void setCamera(Camera*);

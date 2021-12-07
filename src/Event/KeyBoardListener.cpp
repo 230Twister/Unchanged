@@ -7,7 +7,7 @@ void KeyBoardListener::setEvent(Event* event) {
 }
 
 void KeyBoardListener::handle() {
-	Camera* camera = keyBoardEvent->getPlayer()->getCamera();
+	Camera* camera = keyBoardEvent->getWorld()->getCamera();
 	int key = keyBoardEvent->getKey();
 	float delta_time = keyBoardEvent->getDeltaTime();
 

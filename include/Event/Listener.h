@@ -3,6 +3,7 @@
 
 class Event;
 class KeyBoardEvent;
+class PhysicsEvent;
 
 class Listener {
 public:
@@ -10,6 +11,16 @@ public:
 	virtual void handle() = 0;
 };
 
+// 物理模拟监听类
+class PhysicsListener : public Listener {
+private:
+	PhysicsEvent* physicsEvent;
+public:
+	void setEvent(Event*);
+	void handle();
+};
+
+// 键盘监听类
 class KeyBoardListener : public Listener {
 private:
 	KeyBoardEvent* keyBoardEvent;
