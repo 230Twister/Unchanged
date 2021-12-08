@@ -6,6 +6,7 @@
 
 class HandleList;
 class Listener;
+class PhysicsWorld;
 
 // 事件基类
 class Event {
@@ -14,21 +15,36 @@ public:
 	virtual void call() = 0;
 };
 
-// 键盘监听类
+// 物理模拟事件类
+class PhysicsEvent : public Event {
+private:
+	static HandleList handleList;
+	
+	World* world;
+	PhysicsWorld* physicsWorld;
+
+public:
+	PhysicsEvent(World*, PhysicsWorld*);
+	World* getWorld();
+	PhysicsWorld* getPhysicsWorld();
+
+	void addListener(Listener*);
+	void call();
+};
+
+// 键盘敲击事件类
 class KeyBoardEvent : public Event{
 private:
 	static HandleList handleList;
 
 	int key;
 	World* world;
-	Player* player;
 	float deltaTime;
 
 public:
 
-	KeyBoardEvent(World*, Player*, int, float);
+	KeyBoardEvent(World*, int, float);
 	World* getWorld();
-	Player* getPlayer();
 	int getKey();
 	float getDeltaTime();
 

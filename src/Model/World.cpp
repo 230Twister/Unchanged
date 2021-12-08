@@ -4,19 +4,26 @@
 #include "Model/World.h"
 #include "Game/PhysicsWorld.h"
 #include <GLFW/glfw3.h>
+#include "Model/Player.h"
 
 World::World(const char* world_obj) {
-    sunLightDirection = glm::vec3(100.0f, 40.0f, 0.0f);
+    time = 0;
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
+    sunShader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
+    moonShader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
     model = new Model(world_obj);
+    sun = new Sun;
+    moon = new Moon;
+
     loadDepthMap();
-    skybox = new SkyBox;
-    water = new Water;
+    loadSun();
+    loadMoon();
 }
 
 /**
- * @brief 生成深度贴图
+/*
+* @brief 生成深度贴图
 */
 void World::loadDepthMap() {
 
@@ -49,7 +56,11 @@ void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
     float near_plane = 0.1f, far_plane = 200.0f;
     lightProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, near_plane, far_plane);
-    glm::vec3 light_pos = camera->Position + glm::vec3(0.0f, 30.0f, 0.0f) + sunLightDirection;
+    glm::vec3 light_pos;
+    if (time % dayTime < day)
+        light_pos = camera->Position + glm::vec3(0.0f, 30.0f, 0.0f) + sun->GetLightDirection();
+    else
+        light_pos = camera->Position + glm::vec3(0.0f, 30.0f, 0.0f) + moon->GetLightDirection();
     lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
     lightSpaceMatrix = lightProjection * lightView;
 }
@@ -73,6 +84,7 @@ void World::renderDepthMap() {
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShader);
+    player->render(shadowMappingShader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glCullFace(GL_BACK);
@@ -83,6 +95,10 @@ void World::renderDepthMap() {
  * @brief 完整的渲染
 */
 void World::render() {
+    // 计算此时时间
+    int currentTime = time % dayTime;
+    bool isDay = (currentTime < day);
+
     // 重置视口
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -91,7 +107,7 @@ void World::render() {
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     modelShader->use();
-    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 600.0f);
     glm::mat4 view = camera->GetViewMatrix();
 
     // 传递Uniform数据
@@ -101,12 +117,38 @@ void World::render() {
     modelShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
 
     modelShader->setVec3("viewPos", camera->Position);
-    modelShader->setVec3("direction_light.direction", sunLightDirection);
-    // modelShader->setVec3("direction_light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-    modelShader->setVec3("direction_light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-    // modelShader->setVec3("direction_light.diffuse", glm::vec3(0.9f, 0.9f, 0.9f));
-    modelShader->setVec3("direction_light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
-    modelShader->setVec3("direction_light.specular", glm::vec3(0.7f, 0.7f, 0.7f));
+    if (isDay)
+    {
+        modelShader->setVec3("direction_light.direction", sun->GetLightDirection());
+
+        // 线性计算白天光线变化
+        int noon = day / 2;
+        float a_morning = 0.2f + (2.0f * currentTime) / dayTime;
+        float d_morning = 0.6f + (1.2f * currentTime) / dayTime;
+        float s_morning = 0.3f + (1.6f * currentTime) / dayTime;
+        float a_afternoon = 1.2f - (2.0f * currentTime) / dayTime;
+        float d_afternoon = 1.2f - (1.2f * currentTime) / dayTime;
+        float s_afternoon = 1.1f - (1.6f * currentTime) / dayTime;
+        if (currentTime < noon)
+        {
+            modelShader->setVec3("direction_light.ambient", glm::vec3(a_morning, a_morning, a_morning));
+            modelShader->setVec3("direction_light.diffuse", glm::vec3(d_morning, d_morning, d_morning));
+            modelShader->setVec3("direction_light.specular", glm::vec3(s_morning, s_morning, s_morning));
+        }
+        else
+        {
+            modelShader->setVec3("direction_light.ambient", glm::vec3(a_afternoon, a_afternoon, a_afternoon));
+            modelShader->setVec3("direction_light.diffuse", glm::vec3(d_afternoon, d_afternoon, d_afternoon));
+            modelShader->setVec3("direction_light.specular", glm::vec3(s_afternoon, s_afternoon, s_afternoon));
+        }
+    }
+    else
+    {
+        modelShader->setVec3("direction_light.direction", moon->GetLightDirection());
+        modelShader->setVec3("direction_light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+        modelShader->setVec3("direction_light.diffuse", glm::vec3(0.6f, 0.6f, 0.6f));
+        modelShader->setVec3("direction_light.specular", glm::vec3(0.3f, 0.3f, 0.3f));
+    }
 
     modelShader->setVec3("spot_light.position", camera->Position);
     modelShader->setVec3("spot_light.direction", camera->Front);
@@ -122,8 +164,10 @@ void World::render() {
     glActiveTexture(GL_TEXTURE0 + 2);
     modelShader->setInt("texture_shadowMap", 2);
     glBindTexture(GL_TEXTURE_2D, depthMap);
+
     // 绘制场景
     renderObjects(modelShader);
+    player->render(modelShader);
 
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
@@ -135,6 +179,30 @@ void World::render() {
     // 渲染天空盒
     skybox->renderSkybox();
 
+
+    // 白天太阳，晚上月亮
+    if (isDay)
+    {
+		sunShader->use();
+		projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 2000.0f);
+		view = camera->GetViewMatrix();
+		sunShader->setMat4("view", view);
+		sunShader->setMat4("projection", projection);
+
+		// 渲染太阳
+		renderSun(sunShader);
+    }
+    else
+    {
+        moonShader->use();
+        projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 2000.0f);
+        view = camera->GetViewMatrix();
+        moonShader->setMat4("view", view);
+        moonShader->setMat4("projection", projection);
+
+        // 渲染月亮
+        renderMoon(moonShader);
+    }
     // 水面
     water->waterShader->use();
     view = camera->GetViewMatrix();
@@ -162,6 +230,53 @@ void World::renderObjects(Shader* shader) {
     model->Draw(*shader);
 }
 
+/**
+ * @brief 渲染太阳
+ * @param shader 渲染使用的着色器
+*/
+void World::renderSun(Shader* shader)
+{
+    glBindVertexArray(sunVAO);
+    setTime(time + 1);
+    constexpr GLfloat _pi = glm::pi<GLfloat>();
+    float angle = (float)(time) / (float)(dayTime) * 2 * _pi;
+    sun->Render(*shader, angle);
+    glBindVertexArray(0);
+}
+
+/**
+ * @brief 渲染太阳
+ * @param shader 渲染使用的着色器
+*/
+void World::renderMoon(Shader* shader)
+{
+    glBindVertexArray(moonVAO);
+    setTime(time + 1);
+    constexpr GLfloat _pi = glm::pi<GLfloat>();
+    float angle = (float)(time) / (float)(dayTime) * 2 * _pi - _pi;
+    moon->Render(*shader, angle);
+    glBindVertexArray(0);
+}
+
+/**
+ * @brief 渲染天空盒
+*/
+void World::renderSkybox() {
+    glBindVertexArray(skyboxVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glBindVertexArray(0);
+
+    glDepthFunc(GL_LESS);
+}
+
+/**
+ * @brief 给世界添加实体
+*/
+void World::addEntity(Player* player) {
+    this->player = player;
+}
 
 void World::setCamera(Camera* camera) {
     this->camera = camera;
@@ -172,11 +287,7 @@ void World::setCamera(Camera* camera) {
  * @param time 时间0-18000
 */
 void World::setTime(unsigned int time) {
-    this->time = time % 1296000;
-
-    glm::mat4 rotation = glm::mat4(1.0f);
-    rotation = glm::rotate(rotation, glm::radians(time / 3600.0f), glm::vec3(0.0, 0.0, 1.0));
-    sunLightDirection = glm::vec3(rotation * glm::vec4(sunLightDirection, 1.0f));
+    this->time = time % dayTime;
 }
 
 /**
@@ -199,6 +310,7 @@ World::~World() {
     delete shadowMappingShader;
     delete modelShader;
     delete model;
+    delete sun;
     delete skybox;
     delete water;
 }
