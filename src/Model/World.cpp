@@ -2,6 +2,9 @@
 #include "Model/World.h"
 #include "Game/PhysicsWorld.h"
 #include "Model/Player.h"
+#include "Model/Sun.h"
+#include "Model/Moon.h"
+#include <glad/glad.h>
 
 extern float skyboxVertices[108];
 extern unsigned int loadCubemap(vector<std::string>);
@@ -12,8 +15,7 @@ World::World(const char* world_obj) {
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
     skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
-    sunShader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
-    moonShader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
+    starShader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
     model = new Model(world_obj);
     sun = new Sun;
     moon = new Moon;
@@ -108,13 +110,20 @@ void World::loadDepthMap() {
 */
 void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
-    float near_plane = 0.1f, far_plane = 200.0f;
-    lightProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, near_plane, far_plane);
+    float near_plane = 0.1f, far_plane = 500.0f;
+    lightProjection = glm::ortho(-250.0f, 250.0f, -250.0f, 250.0f, near_plane, far_plane);
     glm::vec3 light_pos;
-    if (time % dayTime < day)
-        light_pos = camera->Position + glm::vec3(0.0f, 30.0f, 0.0f) + sun->GetLightDirection();
-    else
-        light_pos = camera->Position + glm::vec3(0.0f, 30.0f, 0.0f) + moon->GetLightDirection();
+    if (time % DAY_TIME < DAY) {
+        glm::vec3 light_dir = sun->GetLightDirection();
+        light_dir *= 300;
+        light_pos = light_dir;
+    }
+    else {
+        glm::vec3 light_dir = moon->GetLightDirection();
+        light_dir *= 300;
+        light_pos = light_dir;
+    }
+        
     lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
     lightSpaceMatrix = lightProjection * lightView;
 }
@@ -150,8 +159,8 @@ void World::renderDepthMap() {
 */
 void World::render() {
     // 计算此时时间
-    int currentTime = time % dayTime;
-    bool isDay = (currentTime < day);
+    int currentTime = time % DAY_TIME;
+    bool isDay = (currentTime < DAY);
 
     // 重置视口
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
@@ -176,13 +185,13 @@ void World::render() {
         modelShader->setVec3("direction_light.direction", sun->GetLightDirection());
 
         // 线性计算白天光线变化
-        int noon = day / 2;
-        float a_morning = 0.2f + (2.0f * currentTime) / dayTime;
-        float d_morning = 0.6f + (1.2f * currentTime) / dayTime;
-        float s_morning = 0.3f + (1.6f * currentTime) / dayTime;
-        float a_afternoon = 1.2f - (2.0f * currentTime) / dayTime;
-        float d_afternoon = 1.2f - (1.2f * currentTime) / dayTime;
-        float s_afternoon = 1.1f - (1.6f * currentTime) / dayTime;
+        int noon = DAY / 2;
+        float a_morning = 0.2f + (2.0f * currentTime) / DAY_TIME;
+        float d_morning = 0.6f + (1.2f * currentTime) / DAY_TIME;
+        float s_morning = 0.3f + (1.6f * currentTime) / DAY_TIME;
+        float a_afternoon = 1.2f - (2.0f * currentTime) / DAY_TIME;
+        float d_afternoon = 1.2f - (1.2f * currentTime) / DAY_TIME;
+        float s_afternoon = 1.1f - (1.6f * currentTime) / DAY_TIME;
         if (currentTime < noon)
         {
             modelShader->setVec3("direction_light.ambient", glm::vec3(a_morning, a_morning, a_morning));
@@ -237,25 +246,25 @@ void World::render() {
     // 白天太阳，晚上月亮
     if (isDay)
     {
-		sunShader->use();
-		projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 2000.0f);
+        starShader->use();
+		projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 		view = camera->GetViewMatrix();
-		sunShader->setMat4("view", view);
-		sunShader->setMat4("projection", projection);
+        starShader->setMat4("view", view);
+        starShader->setMat4("projection", projection);
 
 		// 渲染太阳
-		renderSun(sunShader);
+		renderSun(starShader);
     }
     else
     {
-        moonShader->use();
-        projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 2000.0f);
+        starShader->use();
+        projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 600.0f);
         view = camera->GetViewMatrix();
-        moonShader->setMat4("view", view);
-        moonShader->setMat4("projection", projection);
+        starShader->setMat4("view", view);
+        starShader->setMat4("projection", projection);
 
         // 渲染月亮
-        renderMoon(moonShader);
+        renderMoon(starShader);
     }
 }
 
@@ -271,12 +280,11 @@ void World::renderObjects(Shader* shader) {
  * @brief 渲染太阳
  * @param shader 渲染使用的着色器
 */
-void World::renderSun(Shader* shader)
-{
+void World::renderSun(Shader* shader) {
     glBindVertexArray(sunVAO);
     setTime(time + 1);
     constexpr GLfloat _pi = glm::pi<GLfloat>();
-    float angle = (float)(time) / (float)(dayTime) * 2 * _pi;
+    float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi;
     sun->Render(*shader, angle);
     glBindVertexArray(0);
 }
@@ -285,12 +293,11 @@ void World::renderSun(Shader* shader)
  * @brief 渲染太阳
  * @param shader 渲染使用的着色器
 */
-void World::renderMoon(Shader* shader)
-{
+void World::renderMoon(Shader* shader) {
     glBindVertexArray(moonVAO);
     setTime(time + 1);
     constexpr GLfloat _pi = glm::pi<GLfloat>();
-    float angle = (float)(time) / (float)(dayTime) * 2 * _pi - _pi;
+    float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi - _pi;
     moon->Render(*shader, angle);
     glBindVertexArray(0);
 }
@@ -324,7 +331,7 @@ void World::setCamera(Camera* camera) {
  * @param time 时间0-18000
 */
 void World::setTime(unsigned int time) {
-    this->time = time % dayTime;
+    this->time = time % DAY_TIME;
 }
 
 /**
@@ -347,7 +354,16 @@ World::~World() {
     delete shadowMappingShader;
     delete modelShader;
     delete skyboxShader;
+    delete starShader;
 
     delete model;
     delete sun;
+    delete moon;
+
+    glDeleteVertexArrays(1, &sunVAO);
+    glDeleteBuffers(1, &sunVBO);
+    glDeleteVertexArrays(1, &moonVAO);
+    glDeleteBuffers(1, &moonVBO);
+    glDeleteVertexArrays(1, &skyboxVAO);
+    glDeleteBuffers(1, &skyboxVBO);
 }

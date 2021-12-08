@@ -1,4 +1,6 @@
 #include "Game/PhysicsWorld.h"
+#include <BulletDynamics\Character\btKinematicCharacterController.h>
+#include <BulletCollision\CollisionDispatch\btGhostObject.h>
 
 PhysicsWorld::PhysicsWorld() {
 	collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -10,10 +12,11 @@ PhysicsWorld::PhysicsWorld() {
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));        // 设置重力加速度 Y向下
 }
 
-void PhysicsWorld::addMoveingRigidBody(Model* model, btScalar mass, btVector3 orgin) {
+void PhysicsWorld::addCharator(Model* model, btVector3 orgin) {
+    ghostObject = new btPairCachingGhostObject();
 
     // 建立碰撞形状
-    btCollisionShape* modelShape = new btBoxShape(btVector3(btScalar(1.5), btScalar(1.5), btScalar(1.5)));
+    btConvexShape* modelShape = new btCapsuleShape(2.0f, 2.0f);
     collisionShapes.push_back(modelShape);
 
     // 建立变换矩阵
@@ -21,19 +24,17 @@ void PhysicsWorld::addMoveingRigidBody(Model* model, btScalar mass, btVector3 or
     modelTransform.setIdentity();
     modelTransform.setOrigin(orgin);        // 设置原点位置
 
-    btVector3 localInertia(0, 0, 0);        // 惯性
-    bool isDynamic = (mass != 0.f);
-    if (isDynamic)
-        modelShape->calculateLocalInertia(mass, localInertia);
+    ghostObject->setCollisionShape(modelShape);
+    ghostObject->setWorldTransform(modelTransform);
+    ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
+    overlappingPairCache->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
 
-    // 运动状态
-    btDefaultMotionState* myMotionState = new btDefaultMotionState(modelTransform);
-    // 刚体构造信息
-    btRigidBody::btRigidBodyConstructionInfo  rbInfo(mass, myMotionState, modelShape, localInertia);
-    btRigidBody* body = new btRigidBody(rbInfo);
+    character = new btKinematicCharacterController(ghostObject, modelShape, btScalar(0.5f));
+    character->setGravity(btVector3(0, -10, 0));
 
-    // 将刚体添加至动态世界中
-    dynamicsWorld->addRigidBody(body);
+    dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter,
+        btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+    dynamicsWorld->addAction(character);
 }
 
 void PhysicsWorld::addRigidBody(Model* model) {
@@ -88,6 +89,78 @@ void PhysicsWorld::addRigidBody(Model* model) {
     dynamicsWorld->addRigidBody(body);
 }
 
+/**
+ * @brief 获取物理世界中某个实体的转换矩阵
+ * @param index 实体的下标
+ * @return 转换
+*/
+btTransform& PhysicsWorld::getTransform(int index) {
+    btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[index];
+    btRigidBody* body = btRigidBody::upcast(obj);
+    btTransform& trans = obj->getWorldTransform();
+    if (body && body->getMotionState()) {
+        body->getMotionState()->getWorldTransform(trans);
+    }
+    else {
+        trans = obj->getWorldTransform();
+    }
+    return trans;
+}
+
+/**
+ * @brief 物理世界模拟
+*/
+void PhysicsWorld::stepSimulation() {
+    dynamicsWorld->stepSimulation(1.f / 150.f, 10);
+}
+
+/**
+ * @brief 角色跳跃动作
+*/
+void PhysicsWorld::characterJump() {
+    if (character->onGround()) {
+        character->jump();
+    }
+}
+
+/**
+ * @brief 角色移动
+ * @param direction 移动方向 
+*/
+void PhysicsWorld::characterWalk(WalkDirection direction, float deltaTime) {
+    btTransform& transform = ghostObject->getWorldTransform();
+    btVector3 forwardDir = transform.getBasis()[2];
+
+    btVector3 walkDirection = btVector3(0.0, 0.0, 0.0);
+    btScalar walkVelocity = btScalar(1.1) * 4.0;        // 4 km/h -> 1.1 m/s
+    btScalar walkSpeed = walkVelocity * deltaTime * 2.0f;
+
+    if (direction == WalkDirection::RIGHT) {
+        /*float yaw = 0.05f;
+        btMatrix3x3 orn = ghostObject->getWorldTransform().getBasis();
+        orn *= btMatrix3x3(btQuaternion(btVector3(0, 1, 0), yaw));
+        ghostObject->getWorldTransform().setBasis(orn);*/
+        walkDirection += forwardDir;
+        walkDirection = walkDirection.cross(btVector3(0.0, 1.0, 0.0));
+    }
+    else if (direction == WalkDirection::LEFT) {
+        walkDirection += forwardDir;
+        walkDirection = -walkDirection.cross(btVector3(0.0, 1.0, 0.0));
+    }
+    else if (direction == WalkDirection::UP) {
+        walkDirection += forwardDir;
+    }
+    else if (direction == WalkDirection::DOWN) {
+        walkDirection -= forwardDir;
+    }
+
+    character->setWalkDirection(walkDirection * walkSpeed);
+}
+
+void PhysicsWorld::characterStop() {
+    character->setWalkDirection(btVector3(0.0, 0.0, 0.0));
+}
+
 PhysicsWorld::~PhysicsWorld() {
     //清理碰撞形状
     for (int j = 0; j < collisionShapes.size(); j++) {
@@ -96,6 +169,11 @@ PhysicsWorld::~PhysicsWorld() {
         delete shape;
     }
 
+    // 清理角色
+    dynamicsWorld->removeCollisionObject(ghostObject);
+    dynamicsWorld->removeAction(character);
+    delete ghostObject;
+    delete character;
     for (std::vector<float>* vertices : meshVertices) {
         delete vertices;
     }

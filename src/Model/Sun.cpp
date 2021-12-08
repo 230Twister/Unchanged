@@ -1,6 +1,10 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "Model/Sun.h"
 
-Sun::Sun(glm::vec4 c, GLfloat r, GLfloat t)
+Sun::Sun(glm::vec4 c, float r, float t)
 {
     memset(vertices, 0, sizeof(vertices));
     sunLightDirection = glm::vec3(-1.0f, 0.0f, 0.0f);
@@ -9,8 +13,8 @@ Sun::Sun(glm::vec4 c, GLfloat r, GLfloat t)
     trackRadius = t;
 
     // 构造顶点数组
-    GLfloat lon_step = 1.0f / lons;
-    GLfloat lat_step = 1.0f / lats;
+    float lon_step = 1.0f / lons;
+    float lat_step = 1.0f / lats;
     GLuint offset = 0;
     for (int lat = 0; lat < lats; lat++) {  // 纬线u
         for (int lon = 0; lon < lons; lon++) { // 经线v
@@ -19,41 +23,41 @@ Sun::Sun(glm::vec4 c, GLfloat r, GLfloat t)
             glm::vec3 point2 = GetPoint((lat + 1) * lat_step, lon * lon_step);
             glm::vec3 point3 = GetPoint((lat + 1) * lat_step, (lon + 1) * lon_step);
             glm::vec3 point4 = GetPoint(lat * lat_step, (lon + 1) * lon_step);
-            memcpy(vertices + offset, value_ptr(point1), 3 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(point1), 3 * sizeof(float));
             offset += 3;
-            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(float));
             offset += 4;
-            memcpy(vertices + offset, value_ptr(point4), 3 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(point4), 3 * sizeof(float));
             offset += 3;
-            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(float));
             offset += 4;
-            memcpy(vertices + offset, value_ptr(point3), 3 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(point3), 3 * sizeof(float));
             offset += 3;
-            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(float));
             offset += 4;
 
-            memcpy(vertices + offset, value_ptr(point1), 3 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(point1), 3 * sizeof(float));
             offset += 3;
-            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(float));
             offset += 4;
-            memcpy(vertices + offset, value_ptr(point3), 3 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(point3), 3 * sizeof(float));
             offset += 3;
-            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(float));
             offset += 4;
-            memcpy(vertices + offset, value_ptr(point2), 3 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(point2), 3 * sizeof(float));
             offset += 3;
-            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(GLfloat));
+            memcpy(vertices + offset, value_ptr(color), 4 * sizeof(float));
             offset += 4;
         }
     }
 }
 
-glm::vec3 Sun::GetPoint(GLfloat u, GLfloat v)
+glm::vec3 Sun::GetPoint(float u, float v)
 {
-    constexpr GLfloat _pi = glm::pi<GLfloat>();
-    GLfloat z = radius * cos(_pi * u);
-    GLfloat x = radius * sin(_pi * u) * cos(2 * _pi * v);
-    GLfloat y = radius * sin(_pi * u) * sin(2 * _pi * v);
+    constexpr float _pi = glm::pi<float>();
+    float z = radius * cos(_pi * u);
+    float x = radius * sin(_pi * u) * cos(2 * _pi * v);
+    float y = radius * sin(_pi * u) * sin(2 * _pi * v);
     return glm::vec3(x, y, z);
 }
 

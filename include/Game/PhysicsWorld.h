@@ -4,6 +4,13 @@
 #include <bullet/btBulletDynamicsCommon.h>
 #include "Model/Model.h"
 
+class btPairCachingGhostObject;
+class btKinematicCharacterController;
+
+enum class WalkDirection {
+	RIGHT, LEFT, UP, DOWN
+};
+
 class PhysicsWorld {
 private:
 	btDefaultCollisionConfiguration* collisionConfiguration;
@@ -12,28 +19,23 @@ private:
 	btSequentialImpulseConstraintSolver* solver;
 	btDiscreteDynamicsWorld* dynamicsWorld;
 
+	btKinematicCharacterController* character;
+	btPairCachingGhostObject* ghostObject;
+
 	btAlignedObjectArray<btCollisionShape*> collisionShapes;
 	std::vector<std::vector<float>*> meshVertices;
 public:
 	PhysicsWorld();
-	void addMoveingRigidBody(Model*, btScalar, btVector3);
+	void addCharator(Model*, btVector3);
 	void addRigidBody(Model*);
-	void stepSimulation() { dynamicsWorld->stepSimulation(1.f / 150.f, 10); }
 
-	btTransform getTrans() {
-		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[1];
-		btRigidBody* body = btRigidBody::upcast(obj);
-		btTransform trans;
-		if (body && body->getMotionState())
-		{
-			body->getMotionState()->getWorldTransform(trans);
-		}
-		else
-		{
-			trans = obj->getWorldTransform();
-		}
-		return trans;
-	}
+	void characterJump();
+	void characterWalk(WalkDirection, float);
+	void characterStop();
+
+	void stepSimulation();
+
+	btTransform& getTransform(int);
 	~PhysicsWorld();
 };
 
