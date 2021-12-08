@@ -12,10 +12,9 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-unsigned int loadCubemap(vector<std::string> faces);
 
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 800;
 
 // camera
 Camera* camera;
@@ -25,6 +24,7 @@ bool firstMouse = true;
 
 // 窗口大小
 const GLuint WIDTH = 1200, HEIGHT = 800;
+
 
 int main() {
 	// 初始化 GLFW
@@ -60,17 +60,22 @@ int main() {
 	// 设置深度测试
 	glEnable(GL_DEPTH_TEST);
 
+	glEnable(GL_BLEND);
+	glEnable(GL_FRAMEBUFFER_SRGB);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	Game game;
 	game.init();
 	camera = game.getCamera();
 
 	// 主循环
 	while (!glfwWindowShouldClose(window)) {
-
 		game.processInput(window);
 
+		// All the rendering starts from here
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		game.loop();
-		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}

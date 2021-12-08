@@ -137,4 +137,12 @@ void main()
     vec3 result = ambient + getDirectionLight();
 
     FragColor = vec4(result, 1.0f);
+
+    // ±¡Îí
+    // float dist = length(viewPos - vec3(FragPos));
+    // vec4 fogColor = vec4(0.7f, 0.7f, 0.7f, 0.9f);
+    // float fogFactor = 1 - exp(-0.004 * dist);
+
+    // FragColor = mix(FragColor, fogColor, fogFactor);
+
 }

@@ -1,9 +1,12 @@
 #ifndef WORLD_H
 #define WORLD_H
 
-#include "Shader.h"
 #include "Camera.h"
 #include "Model.h"
+#include "Shader.h"
+
+class SkyBox;
+class Water;
 
 class World{
 private:
@@ -18,22 +21,20 @@ private:
 
 	Shader* modelShader;			// 模型渲染着色器
 	Shader* shadowMappingShader;	// 深度贴图着色器
-	Shader* skyboxShader;			// 天空盒着色器
-
-	unsigned int skyboxVAO;
-	unsigned int skyboxVBO;
-	unsigned int cubemapTexture;
 
 	unsigned int depthMap;			// 深度贴图
 	unsigned int depthMapFBO;		// 深度帧缓冲
 
 	Camera* camera;					// 摄像机
 
+	SkyBox* skybox;
+
+	Water* water;
+
+
 	void calculateLightSpaceMatrix();
 	void renderObjects(Shader*);
-	void renderSkybox();
 	void loadDepthMap();
-	void loadSkybox();
 public:
 	World(const char*);
 

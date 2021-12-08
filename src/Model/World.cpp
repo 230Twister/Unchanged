@@ -1,38 +1,18 @@
 #define STB_IMAGE_IMPLEMENTATION
+#include "Model/SkyBox.h"
+#include "Model/Water.h"
 #include "Model/World.h"
 #include "Game/PhysicsWorld.h"
-
-extern float skyboxVertices[108];
-extern unsigned int loadCubemap(vector<std::string>);
-extern std::vector<std::string> faces;
+#include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
     sunLightDirection = glm::vec3(100.0f, 40.0f, 0.0f);
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
-    skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
     model = new Model(world_obj);
-
     loadDepthMap();
-    loadSkybox();
-}
-
-/**
- * @brief 加载天空盒
-*/
-void World::loadSkybox() {
-    glGenVertexArrays(1, &skyboxVAO);
-    glGenBuffers(1, &skyboxVBO);
-
-    glBindVertexArray(skyboxVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 108, &skyboxVertices, GL_STATIC_DRAW);
-    
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glBindVertexArray(0);
-
-    cubemapTexture = loadCubemap(faces);
+    skybox = new SkyBox;
+    water = new Water;
 }
 
 /**
@@ -122,8 +102,10 @@ void World::render() {
 
     modelShader->setVec3("viewPos", camera->Position);
     modelShader->setVec3("direction_light.direction", sunLightDirection);
-    modelShader->setVec3("direction_light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-    modelShader->setVec3("direction_light.diffuse", glm::vec3(0.9f, 0.9f, 0.9f));
+    // modelShader->setVec3("direction_light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
+    modelShader->setVec3("direction_light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+    // modelShader->setVec3("direction_light.diffuse", glm::vec3(0.9f, 0.9f, 0.9f));
+    modelShader->setVec3("direction_light.diffuse", glm::vec3(0.8f, 0.8f, 0.8f));
     modelShader->setVec3("direction_light.specular", glm::vec3(0.7f, 0.7f, 0.7f));
 
     modelShader->setVec3("spot_light.position", camera->Position);
@@ -140,20 +122,36 @@ void World::render() {
     glActiveTexture(GL_TEXTURE0 + 2);
     modelShader->setInt("texture_shadowMap", 2);
     glBindTexture(GL_TEXTURE_2D, depthMap);
-
     // 绘制场景
     renderObjects(modelShader);
 
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
-    skyboxShader->use();
+    skybox->skyboxShader->use();
     view = glm::mat4(glm::mat3(camera->GetViewMatrix()));
-    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 200.0f);
-    skyboxShader->setMat4("view", view);
-    skyboxShader->setMat4("projection", projection);
-
+    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_WIDTH, 0.1f, 600.0f);
+    skybox->skyboxShader->setMat4("view", view);
+    skybox->skyboxShader->setMat4("projection", projection);
     // 渲染天空盒
-    renderSkybox();
+    skybox->renderSkybox();
+
+    // 水面
+    water->waterShader->use();
+    view = camera->GetViewMatrix();
+    projection = glm::perspective(glm::radians(camera->Zoom),(float)SCR_WIDTH / (float)SCR_WIDTH, 0.1f, 1000.0f);
+    // Set vertex shader data
+    water->waterShader->setMat4("view", view);
+    water->waterShader->setMat4("projection", projection);
+    water->waterShader->setMat4("model", glm::mat4(1.0f));
+    water->waterShader->setFloat("time", (float)glfwGetTime());
+    // Set fragment shader data
+    water->waterShader->setVec3("viewPos", camera->Position);
+    water->waterShader->setVec3("deepWaterColor", glm::vec3(0.1137f, 0.2745f, 0.4392f));
+    // shader.setVec3("lightDir", glm::vec3(-1.0f, -1.0f, 2.0f));
+    water->waterShader->setVec3("lightDir", glm::vec3(100.0f, 40.0f, 0.0f));
+    water->waterShader->setInt("waveMapCount", 0);
+    // 渲染水面
+    water->renderWater();
 }
 
 /**
@@ -164,18 +162,6 @@ void World::renderObjects(Shader* shader) {
     model->Draw(*shader);
 }
 
-/**
- * @brief 渲染天空盒
-*/
-void World::renderSkybox() {
-    glBindVertexArray(skyboxVAO);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
-    glBindVertexArray(0);
-
-    glDepthFunc(GL_LESS);
-}
 
 void World::setCamera(Camera* camera) {
     this->camera = camera;
@@ -212,7 +198,7 @@ Model* World::getBaseModel() {
 World::~World() {
     delete shadowMappingShader;
     delete modelShader;
-    delete skyboxShader;
-
     delete model;
+    delete skybox;
+    delete water;
 }

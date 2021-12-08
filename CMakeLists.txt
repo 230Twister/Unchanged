@@ -22,7 +22,6 @@ aux_source_directory(./src DIR_TOOT_SRCS)
 aux_source_directory(./src/Model DIR_TOOT_SRCS)
 aux_source_directory(./src/Game DIR_TOOT_SRCS)
 aux_source_directory(./src/Event DIR_TOOT_SRCS)
-aux_source_directory(./src/Skybox DIR_TOOT_SRCS)
 
 # 将源代码添加到此项目的可执行文件。
 add_executable (${PROJECT_NAME} ${DIR_TOOT_SRCS})

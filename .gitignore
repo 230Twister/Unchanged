@@ -32,6 +32,7 @@ bld/
 [Ll]ogs/
 out/
 world_model/
+skybox_img/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
