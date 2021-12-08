@@ -7,7 +7,8 @@
 
 class SkyBox;
 class Water;
-
+class Sun;
+class Moon;
 class Player;
 
 class World{
@@ -30,15 +31,6 @@ private:
 	Shader* modelShader;			// 模型渲染着色器
 	Shader* shadowMappingShader;	// 深度贴图着色器
 
-	unsigned int skyboxVAO;
-	unsigned int skyboxVBO;
-	unsigned int cubemapTexture;
-
-	unsigned int sunVAO;
-	unsigned int sunVBO;
-	unsigned int moonVAO;
-	unsigned int moonVBO;
-
 	unsigned int depthMap;			// 深度贴图
 	unsigned int depthMapFBO;		// 深度帧缓冲
 
@@ -51,13 +43,10 @@ private:
 
 	void calculateLightSpaceMatrix();
 	void renderObjects(Shader*);
-	void renderSun(Shader*);
-	void renderMoon(Shader*);
-	void renderSkybox();
+	void renderSun();
+	void renderMoon();
 	void loadDepthMap();
-	void loadSkybox();
-	void loadSun();
-	void loadMoon();
+
 public:
 	World(const char*);
 

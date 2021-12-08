@@ -1,4 +1,4 @@
-#include "Model/Sun.h"
+#include"Model/Sun.h"
 
 Sun::Sun(glm::vec4 c, GLfloat r, GLfloat t)
 {
@@ -46,6 +46,8 @@ Sun::Sun(glm::vec4 c, GLfloat r, GLfloat t)
             offset += 4;
         }
     }
+    sunShader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
+    LoadSun();
 }
 
 glm::vec3 Sun::GetPoint(GLfloat u, GLfloat v)
@@ -57,21 +59,40 @@ glm::vec3 Sun::GetPoint(GLfloat u, GLfloat v)
     return glm::vec3(x, y, z);
 }
 
-void Sun::Render(Shader& sunShader, float a)
+void Sun::Render(float a)
 {
+    glBindVertexArray(sunVAO);
     // 计算太阳位置并渲染
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(trackRadius * cos(a), trackRadius * sin(a), 0.0f));
-    glUniformMatrix4fv(glGetUniformLocation(sunShader.getID(), "model"), 1, GL_FALSE, value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(sunShader->getID(), "model"), 1, GL_FALSE, value_ptr(model));
 
-	glDrawArrays(GL_TRIANGLES, 0, 6 * Sun::lats * Sun::lons);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * Sun::lats * Sun::lons);
 
     // 修改光线方向
-	sunLightDirection.x = cos(a);
-	sunLightDirection.y = sin(a);
+    sunLightDirection.x = cos(a);
+    sunLightDirection.y = sin(a);
+    glBindVertexArray(0);
 }
 
 glm::vec3 Sun::GetLightDirection()
 {
     return sunLightDirection;
+}
+
+void Sun::LoadSun()
+{
+    glGenVertexArrays(1, &sunVAO);
+    glGenBuffers(1, &sunVBO);
+
+    glBindVertexArray(sunVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, sunVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    glBindVertexArray(0);
 }
