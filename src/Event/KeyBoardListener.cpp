@@ -14,19 +14,19 @@ void KeyBoardListener::handle() {
 	float delta_time = keyBoardEvent->getDeltaTime();
 
 	if (key == GLFW_KEY_W) {
-		camera->ProcessKeyboard(FORWARD, delta_time);
+		physics->updateCharacterFront(camera->Yaw);
 		physics->characterWalk(WalkDirection::UP, delta_time);
 	}
 	else if (key == GLFW_KEY_S) {
-		camera->ProcessKeyboard(BACKWARD, delta_time);
+		physics->updateCharacterFront(camera->Yaw);
 		physics->characterWalk(WalkDirection::DOWN, delta_time);
 	}
 	else if (key == GLFW_KEY_A) {
-		camera->ProcessKeyboard(LEFT, delta_time);
+		physics->updateCharacterFront(camera->Yaw);
 		physics->characterWalk(WalkDirection::LEFT, delta_time);
 	}
 	else if (key == GLFW_KEY_D) {
-		camera->ProcessKeyboard(RIGHT, delta_time);
+		physics->updateCharacterFront(camera->Yaw);
 		physics->characterWalk(WalkDirection::RIGHT, delta_time);
 	}
 	else if (key == GLFW_KEY_SPACE) {
@@ -35,5 +35,6 @@ void KeyBoardListener::handle() {
 	else {
 		physics->characterStop();
 	}
-		
+	btVector3& pos = physics->getTransform(1).getOrigin();
+	camera->Position = glm::vec3(pos[0], pos[1] + 3.0f, pos[2]);
 }

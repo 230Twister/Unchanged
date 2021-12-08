@@ -1,6 +1,9 @@
 #include "Game/Game.h"
 #include "Event/Event.h"
 
+/**
+ * @brief ”Œœ∑≥ı ºªØ
+*/
 void Game::init() {
 	world = new World("../../../world_model/models.obj");
 	player = new Player();

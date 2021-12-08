@@ -10,6 +10,9 @@ PhysicsWorld::PhysicsWorld() {
 	dynamicsWorld = new btDiscreteDynamicsWorld(
 		dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));        // 设置重力加速度 Y向下
+
+    ghostObject = NULL;
+    character = NULL;
 }
 
 void PhysicsWorld::addCharator(Model* model, btVector3 orgin) {
@@ -132,14 +135,10 @@ void PhysicsWorld::characterWalk(WalkDirection direction, float deltaTime) {
     btVector3 forwardDir = transform.getBasis()[2];
 
     btVector3 walkDirection = btVector3(0.0, 0.0, 0.0);
-    btScalar walkVelocity = btScalar(1.1) * 4.0;        // 4 km/h -> 1.1 m/s
+    btScalar walkVelocity = btScalar(1.1) * 8.0;        // 4 km/h -> 1.1 m/s
     btScalar walkSpeed = walkVelocity * deltaTime * 2.0f;
 
     if (direction == WalkDirection::RIGHT) {
-        /*float yaw = 0.05f;
-        btMatrix3x3 orn = ghostObject->getWorldTransform().getBasis();
-        orn *= btMatrix3x3(btQuaternion(btVector3(0, 1, 0), yaw));
-        ghostObject->getWorldTransform().setBasis(orn);*/
         walkDirection += forwardDir;
         walkDirection = walkDirection.cross(btVector3(0.0, 1.0, 0.0));
     }
@@ -155,6 +154,11 @@ void PhysicsWorld::characterWalk(WalkDirection direction, float deltaTime) {
     }
 
     character->setWalkDirection(walkDirection * walkSpeed);
+}
+
+void PhysicsWorld::updateCharacterFront(float yaw) {
+    yaw -= 90.0f;
+    ghostObject->getWorldTransform().getBasis().setRotation(btQuaternion(btVector3(0, 1, 0), glm::radians(yaw)));
 }
 
 void PhysicsWorld::characterStop() {

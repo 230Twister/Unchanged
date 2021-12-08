@@ -13,6 +13,7 @@ private:
 	Camera* camera;
 
 	glm::vec3 position;	// 玩家所在坐标
+	float yaw;
 	int health;			// 血量
 
 public:
@@ -21,6 +22,7 @@ public:
 	void render(Shader*);
 
 	void setPosition(glm::vec3);
+	void setYaw(float);
 
 	Camera* getCamera();
 	Model* getBaseModel() { return model; }

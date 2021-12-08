@@ -31,6 +31,7 @@ public:
 
 	void characterJump();
 	void characterWalk(WalkDirection, float);
+	void updateCharacterFront(float);
 	void characterStop();
 
 	void stepSimulation();
