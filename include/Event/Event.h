@@ -39,12 +39,14 @@ private:
 
 	int key;
 	World* world;
+	PhysicsWorld* physicsWorld;
 	float deltaTime;
 
 public:
 
-	KeyBoardEvent(World*, int, float);
+	KeyBoardEvent(World*, PhysicsWorld*, int, float);
 	World* getWorld();
+	PhysicsWorld* getPhysicsWorld();
 	int getKey();
 	float getDeltaTime();
 

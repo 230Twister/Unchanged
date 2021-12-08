@@ -22,11 +22,11 @@ private:
 	Sun* sun;
 	Moon* moon;
 
-	unsigned int time;				// 当前时间
-	static const int dayTime = 1800; // 一天的时间
-	static const int day = dayTime / 2;
-	glm::vec3 sunLightDirection;	// 太阳光方向向量
-	glm::mat4 lightSpaceMatrix;		// 光空间转换矩阵
+	unsigned int time;					// 当前时间
+	static const int DAY_TIME = 3600;	// 一天的时间
+	static const int DAY = DAY_TIME / 2;
+
+	glm::mat4 lightSpaceMatrix;			// 光空间转换矩阵
 
 	Shader* modelShader;			// 模型渲染着色器
 	Shader* shadowMappingShader;	// 深度贴图着色器

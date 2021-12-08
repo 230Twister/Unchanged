@@ -56,13 +56,20 @@ void World::loadDepthMap() {
 */
 void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
-    float near_plane = 0.1f, far_plane = 200.0f;
-    lightProjection = glm::ortho(-200.0f, 200.0f, -200.0f, 200.0f, near_plane, far_plane);
+    float near_plane = 0.1f, far_plane = 500.0f;
+    lightProjection = glm::ortho(-250.0f, 250.0f, -250.0f, 250.0f, near_plane, far_plane);
     glm::vec3 light_pos;
-    if (time % dayTime < day)
-        light_pos = camera->Position + glm::vec3(0.0f, 30.0f, 0.0f) + sun->GetLightDirection();
-    else
-        light_pos = camera->Position + glm::vec3(0.0f, 30.0f, 0.0f) + moon->GetLightDirection();
+    if (time % DAY_TIME < DAY) {
+        glm::vec3 light_dir = sun->GetLightDirection();
+        light_dir *= 300;
+        light_pos = light_dir;
+    }
+    else {
+        glm::vec3 light_dir = moon->GetLightDirection();
+        light_dir *= 300;
+        light_pos = light_dir;
+    }
+        
     lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
     lightSpaceMatrix = lightProjection * lightView;
 }
@@ -98,8 +105,8 @@ void World::renderDepthMap() {
 */
 void World::render() {
     // 计算此时时间
-    int currentTime = time % dayTime;
-    bool isDay = (currentTime < day);
+    int currentTime = time % DAY_TIME;
+    bool isDay = (currentTime < DAY);
 
     // 重置视口
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
@@ -122,14 +129,15 @@ void World::render() {
         modelShader->setVec3("direction_light.direction", sun->GetLightDirection());
 
         // 线性计算白天光线变化
-        int noon = day / 2;
-        float a_morning = 0.2f + (2.0f * currentTime) / dayTime;
-        float d_morning = 0.6f + (1.2f * currentTime) / dayTime;
-        float s_morning = 0.3f + (1.6f * currentTime) / dayTime;
-        float a_afternoon = 1.2f - (2.0f * currentTime) / dayTime;
-        float d_afternoon = 1.2f - (1.2f * currentTime) / dayTime;
-        float s_afternoon = 1.1f - (1.6f * currentTime) / dayTime;
-        if (currentTime < noon){
+        int noon = DAY / 2;
+        float a_morning = 0.2f + (2.0f * currentTime) / DAY_TIME;
+        float d_morning = 0.6f + (1.2f * currentTime) / DAY_TIME;
+        float s_morning = 0.3f + (1.6f * currentTime) / DAY_TIME;
+        float a_afternoon = 1.2f - (2.0f * currentTime) / DAY_TIME;
+        float d_afternoon = 1.2f - (1.2f * currentTime) / DAY_TIME;
+        float s_afternoon = 1.1f - (1.6f * currentTime) / DAY_TIME;
+        if (currentTime < noon)
+        {
             modelShader->setVec3("direction_light.ambient", glm::vec3(a_morning, a_morning, a_morning));
             modelShader->setVec3("direction_light.diffuse", glm::vec3(d_morning, d_morning, d_morning));
             modelShader->setVec3("direction_light.specular", glm::vec3(s_morning, s_morning, s_morning));
@@ -235,7 +243,7 @@ void World::renderSun()
     
     setTime(time + 1);
     constexpr GLfloat _pi = glm::pi<GLfloat>();
-    float angle = (float)(time) / (float)(dayTime) * 2 * _pi;
+    float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi;
     sun->Render(angle);
 }
 
@@ -247,7 +255,7 @@ void World::renderMoon()
 {
     setTime(time + 1);
     constexpr GLfloat _pi = glm::pi<GLfloat>();
-    float angle = (float)(time) / (float)(dayTime) * 2 * _pi - _pi;
+    float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi - _pi;
     moon->Render(angle);
 }
 
@@ -268,7 +276,7 @@ void World::setCamera(Camera* camera) {
  * @param time 时间0-18000
 */
 void World::setTime(unsigned int time) {
-    this->time = time % dayTime;
+    this->time = time % DAY_TIME;
 }
 
 /**
