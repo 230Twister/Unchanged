@@ -42,11 +42,15 @@ Water::Water() {
 		cout << "Steepness = " << waves[i].Q << endl;
 		cout << "Speed = " << waves[i].s << endl;
 	}*/
+
 	genWaves();
 }
 
 Water::~Water() {
-
+	delete[] waterVertices;
+	delete[] waterIndices;
+	delete waterShader;
+	delete[] waves;
 }
 
 void Water::loadWater() {

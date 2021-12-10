@@ -109,7 +109,7 @@ void World::render() {
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     modelShader->use();
-    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 600.0f);
+    glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
     glm::mat4 view = camera->GetViewMatrix();
     // 传递Uniform数据
     modelShader->setMat4("model", glm::mat4(1.0f));
@@ -170,12 +170,11 @@ void World::render() {
     glDepthFunc(GL_LEQUAL);
     skybox->skyboxShader->use();
     view = glm::mat4(glm::mat3(camera->GetViewMatrix()));
-    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_WIDTH, 0.1f, 600.0f);
+    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_WIDTH, 0.1f, 1000.0f);
     skybox->skyboxShader->setMat4("view", view);
     skybox->skyboxShader->setMat4("projection", projection);
     // 渲染天空盒
     skybox->renderSkybox();
-
 
     // 白天太阳，晚上月亮
     if (isDay){
@@ -202,7 +201,7 @@ void World::render() {
     // 水面
     water->waterShader->use();
     view = camera->GetViewMatrix();
-    projection = glm::perspective(glm::radians(camera->Zoom),(float)SCR_WIDTH / (float)SCR_WIDTH, 0.1f, 600.0f);
+    projection = glm::perspective(glm::radians(camera->Zoom),(float)SCR_WIDTH / (float)SCR_WIDTH, 0.1f, 1000.0f);
     // Set vertex shader data
     water->waterShader->setMat4("view", view);
     water->waterShader->setMat4("projection", projection);
