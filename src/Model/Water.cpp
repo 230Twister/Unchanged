@@ -1,4 +1,5 @@
 #include "Model/Water.h"
+#include <time.h>
 
 Water::Water() {
 	// Initialize water surface vertex data

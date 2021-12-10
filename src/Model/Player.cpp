@@ -25,6 +25,10 @@ void Player::setPosition(glm::vec3 pos) {
 	position = pos;
 }
 
+void Player::setYaw(float yaw) {
+	this->yaw = yaw;
+}
+
 Camera* Player::getCamera() {
 	return camera;
 }

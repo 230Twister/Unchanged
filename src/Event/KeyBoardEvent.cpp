@@ -1,16 +1,22 @@
 #include "Event/HandleList.h"
 #include "Event/Event.h"
+#include "Game/PhysicsWorld.h"
 
 HandleList KeyBoardEvent::handleList;
 
-KeyBoardEvent::KeyBoardEvent(World* _world, int _key, float _delta) {
+KeyBoardEvent::KeyBoardEvent(World* _world, PhysicsWorld* _physics, int _key, float _delta) {
 	world = _world;
+	physicsWorld = _physics;
 	key = _key;
 	deltaTime = _delta;
 }
 
 World* KeyBoardEvent::getWorld() {
 	return world;
+}
+
+PhysicsWorld* KeyBoardEvent::getPhysicsWorld() {
+	return physicsWorld;
 }
 
 int KeyBoardEvent::getKey() {
