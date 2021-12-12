@@ -31,13 +31,15 @@ out vec4 FragColor;
 in vec3 Normal;                     // 法向量
 in vec3 FragPos;                    // 片段坐标
 in vec2 TexCoords;                  // 纹理坐标
-in vec4 FragLightSpacePos;          // 片段位于光空间的坐标
+in vec4 FragDirectSpacePos;         // 片段位于平行光空间的坐标
+in vec4 FragSpotSpacePos;           // 片段位于聚光空间的坐标
 
 uniform sampler2D texture_diffuse1;     // 漫反射贴图
 uniform sampler2D texture_specular1;    // 高光贴图
-uniform sampler2D texture_shadowMap;    // 深度贴图
+uniform sampler2D texture_shadowMap1;   // 深度贴图
+uniform sampler2D texture_shadowMap2;   // 深度贴图
 
-float caculateShadow(vec3 lightDir) {
+float caculateShadow(vec3 lightDir, vec4 FragLightSpacePos, sampler2D texture_shadowMap) {
     // 获取采样坐标
     vec3 projCoords = FragLightSpacePos.xyz / FragLightSpacePos.w;
     projCoords = projCoords * 0.5 + 0.5;
@@ -99,7 +101,7 @@ vec3 getDirectionLight() {
     vec3 specular = direction_light.specular * (spec * model_specular);
 
     // 计算阴影
-    float shadow = (1.0 - caculateShadow(lightDir));
+    float shadow = (1.0 - caculateShadow(lightDir, FragDirectSpacePos, texture_shadowMap1));
 
     return shadow * (diffuse + specular);
 }
@@ -125,7 +127,10 @@ vec3 getSpotLight() {
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0f);
     vec3 specular = spot_light.specular * (spec * model_specular);
 
-    return diffuse * intensity + specular * intensity;
+    // 计算阴影
+    float shadow = (1.0 - caculateShadow(lightDir, FragSpotSpacePos, texture_shadowMap2));
+
+    return shadow * (diffuse * intensity + specular * intensity);
 }
 
 void main()

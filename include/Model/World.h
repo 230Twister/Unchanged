@@ -26,20 +26,21 @@ private:
 	static const int DAY_TIME = 3600;	// 一天的时间
 	static const int DAY = DAY_TIME / 2;
 
-	glm::mat4 lightSpaceMatrix;			// 光空间转换矩阵
+	glm::mat4 directSpaceMatrix;		// 平行光空间转换矩阵
+	glm::mat4 spotSpaceMatrix;			// 平行光空间转换矩阵
 
-	Shader* modelShader;			// 模型渲染着色器
-	Shader* shadowMappingShader;	// 深度贴图着色器
+	Shader* modelShader;				// 模型渲染着色器
+	Shader* shadowMappingShader;		// 深度贴图着色器
 
-	unsigned int depthMap;			// 深度贴图
-	unsigned int depthMapFBO;		// 深度帧缓冲
+	unsigned int directDepthMap;		// 平行光深度贴图
+	unsigned int directDepthMapFBO;		// 平行光深度帧缓冲
+	unsigned int spotDepthMap;			// 聚光深度贴图
+	unsigned int spotDepthMapFBO;		// 聚光深度帧缓冲
 
-	Camera* camera;					// 摄像机
+	Camera* camera;						// 摄像机
 
 	SkyBox* skybox;
-
 	Water* water;
-
 
 	void calculateLightSpaceMatrix();
 	void renderObjects(Shader*);
