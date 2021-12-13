@@ -35,6 +35,4 @@ void KeyBoardListener::handle() {
 	else {
 		physics->characterStop();
 	}
-	btVector3& pos = physics->getTransform(1).getOrigin();
-	camera->Position = glm::vec3(pos[0], pos[1] + 3.0f, pos[2]);
 }

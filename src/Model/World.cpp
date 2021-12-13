@@ -92,7 +92,7 @@ void World::calculateLightSpaceMatrix() {
     lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
     directSpaceMatrix = lightProjection * lightView;
 
-    lightProjection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 600.0f);
+    lightProjection = glm::perspective(glm::radians(90.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     lightView = glm::lookAt(camera->Position, camera->Position + camera->Front, glm::vec3(0.0, 1.0, 0.0));
     spotSpaceMatrix = lightProjection * lightView;
 }
@@ -118,6 +118,12 @@ void World::renderDepthMap() {
     renderObjects(shadowMappingShader);
     player->render(shadowMappingShader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
 
     // 设置着色器
     shadowMappingShader->use();
@@ -192,11 +198,11 @@ void World::render() {
     modelShader->setVec3("spot_light.position", camera->Position);
     modelShader->setVec3("spot_light.direction", camera->Front);
     modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
-    modelShader->setVec3("spot_light.diffuse", 1.0f, 1.0f, 1.0f);
+    modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
     modelShader->setVec3("spot_light.specular", 1.0f, 1.0f, 1.0f);
     modelShader->setFloat("spot_light.constant", 1.0f);
-    modelShader->setFloat("spot_light.linear", 0.09);
-    modelShader->setFloat("spot_light.quadratic", 0.032);
+    modelShader->setFloat("spot_light.linear", 0.027);
+    modelShader->setFloat("spot_light.quadratic", 0.0028);
     modelShader->setFloat("spot_light.cutOff", glm::cos(glm::radians(12.5f)));
     modelShader->setFloat("spot_light.outerCutOff", glm::cos(glm::radians(15.0f)));
 
@@ -209,8 +215,10 @@ void World::render() {
     glBindTexture(GL_TEXTURE_2D, spotDepthMap);
 
     // 绘制场景
+    glEnable(GL_CULL_FACE);
     renderObjects(modelShader);
     player->render(modelShader);
+    glDisable(GL_CULL_FACE);
 
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
@@ -277,20 +285,17 @@ void World::renderObjects(Shader* shader) {
 */
 void World::renderSun()
 {
-    
-    setTime(time + 1);
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi;
     sun->Render(angle);
 }
 
 /**
- * @brief 渲染太阳
+ * @brief 渲染月亮
  * @param shader 渲染使用的着色器
 */
 void World::renderMoon()
 {
-    setTime(time + 1);
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi - _pi;
     moon->Render(angle);

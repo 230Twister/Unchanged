@@ -19,7 +19,7 @@ void PhysicsWorld::addCharator(Model* model, btVector3 orgin) {
     ghostObject = new btPairCachingGhostObject();
 
     // 建立碰撞形状
-    btConvexShape* modelShape = new btCapsuleShape(0.8f, 1.5f);
+    btConvexShape* modelShape = new btCapsuleShape(0.5f, 1.0f);
     collisionShapes.push_back(modelShape);
 
     // 建立变换矩阵
@@ -35,6 +35,8 @@ void PhysicsWorld::addCharator(Model* model, btVector3 orgin) {
     character = new btKinematicCharacterController(ghostObject, modelShape, btScalar(0.5f));
     character->setGravity(btVector3(0, -10, 0));
     character->setStepHeight(btScalar(0.2f));
+    character->setJumpSpeed(btScalar(1.1) * 4);
+    character->setFallSpeed(btScalar(1.1) * 8);
 
     dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter,
         btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
@@ -157,6 +159,10 @@ void PhysicsWorld::characterWalk(WalkDirection direction, float deltaTime) {
     character->setWalkDirection(walkDirection * walkSpeed);
 }
 
+/**
+ * @brief 更新角色朝向
+ * @param yaw 
+*/
 void PhysicsWorld::updateCharacterFront(float yaw) {
     yaw -= 90.0f;
     ghostObject->getWorldTransform().getBasis().setRotation(btQuaternion(btVector3(0, 1, 0), glm::radians(yaw)));

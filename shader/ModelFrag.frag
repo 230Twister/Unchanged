@@ -17,9 +17,14 @@ struct SpotLight {
     vec3  direction;    // 光源照的方向
     float cutOff;       // 内圈角度
     float outerCutOff;  // 外圈角度
+
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 uniform PointLight point_light;             // 点光源
 uniform DirectionalLight direction_light;   // 平行光源
@@ -130,7 +135,12 @@ vec3 getSpotLight() {
     // 计算阴影
     float shadow = (1.0 - caculateShadow(lightDir, FragSpotSpacePos, texture_shadowMap2));
 
-    return shadow * (diffuse * intensity + specular * intensity);
+    // 计算衰减
+    float distance    = length(spot_light.position - FragPos);
+    float attenuation = 1.0 / (spot_light.constant + spot_light.linear * distance + 
+                spot_light.quadratic * (distance * distance));
+
+    return attenuation * shadow * (diffuse * intensity + specular * intensity);
 }
 
 void main()
@@ -139,7 +149,7 @@ void main()
     // 环境光
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    vec3 result = ambient + getDirectionLight();
+    vec3 result = ambient + getDirectionLight() + getSpotLight();
 
     FragColor = vec4(result, 1.0f);
 
