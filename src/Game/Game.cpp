@@ -12,7 +12,7 @@ void Game::init() {
 	physics = new PhysicsWorld();
 	
 	physics->addRigidBody(world->getBaseModel());
-	physics->addCharator(player->getBaseModel(), btVector3(-15, 50, 0));
+	physics->addCharator(player->getBaseModel(), btVector3(0, 50, 0));
 	
 	world->addEntity(player);
 	world->setCamera(player->getCamera());
@@ -58,11 +58,20 @@ void Game::processInput(GLFWwindow* window) {
  * @brief 游戏主循环
 */
 void Game::loop() {
+	// 物理世界模拟
 	physics->stepSimulation();
 	PhysicsEvent(world, physics).call();
 
+	// 模型世界渲染
 	world->renderDepthMap();
 	world->render();
+
+	// 时间更新
+	GLfloat currentFrame = glfwGetTime();
+	if (currentFrame - frame >= 0.1f) {
+		frame = currentFrame;
+		world->setTime(world->getTime() + 1);
+	}
 }
 
 Game::~Game() {
