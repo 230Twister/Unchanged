@@ -61,7 +61,6 @@ int main() {
 	glEnable(GL_DEPTH_TEST);
 
 	glEnable(GL_BLEND);
-	// glEnable(GL_FRAMEBUFFER_SRGB);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	Game game;
@@ -76,6 +75,7 @@ int main() {
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		game.loop();
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}

@@ -14,11 +14,11 @@ World::World(const char* world_obj) {
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
 
     model = new Model(world_obj);
-    skybox = new SkyBox;
-    water = new Water;
+    skybox = new SkyBox();
+    water = new Water();
+    sun = new Sun();
+    moon = new Moon();
     loadDepthMap();
-    sun = new Sun;
-    moon = new Moon;
 }
 
 /**
@@ -26,13 +26,13 @@ World::World(const char* world_obj) {
 * @brief 生成深度贴图
 */
 void World::loadDepthMap() {
-
+    /*****************平行光的深度贴图********************/
     // 创建帧缓冲对象
-    glGenFramebuffers(1, &depthMapFBO);
+    glGenFramebuffers(1, &directDepthMapFBO);
 
     // 创建2D纹理
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glGenTextures(1, &directDepthMap);
+    glBindTexture(GL_TEXTURE_2D, directDepthMap);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -42,14 +42,33 @@ void World::loadDepthMap() {
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     // 创建帧缓冲并绑定深度贴图
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, directDepthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, directDepthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    /*****************聚光的深度贴图********************/
+    // 创建帧缓冲对象
+    glGenFramebuffers(1, &spotDepthMapFBO);
+
+    // 创建2D纹理
+    glGenTextures(1, &spotDepthMap);
+    glBindTexture(GL_TEXTURE_2D, spotDepthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    // 创建帧缓冲并绑定深度贴图
+    glBindFramebuffer(GL_FRAMEBUFFER, spotDepthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, spotDepthMap, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
-
 
 /**
  * @brief 计算光空间转换矩阵
@@ -69,28 +88,50 @@ void World::calculateLightSpaceMatrix() {
         light_dir *= 300;
         light_pos = light_dir;
     }
-        
+    
     lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-    lightSpaceMatrix = lightProjection * lightView;
+    directSpaceMatrix = lightProjection * lightView;
+
+    lightProjection = glm::perspective(glm::radians(90.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    lightView = glm::lookAt(camera->Position, camera->Position + camera->Front, glm::vec3(0.0, 1.0, 0.0));
+    spotSpaceMatrix = lightProjection * lightView;
 }
 
 /**
  * @brief 渲染深度贴图
 */
 void World::renderDepthMap() {
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-
     // 计算光空间转换矩阵
     calculateLightSpaceMatrix();
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
     // 设置着色器
     shadowMappingShader->use();
-    shadowMappingShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    shadowMappingShader->setMat4("lightSpaceMatrix", directSpaceMatrix);
 
-    // 渲染深度贴图
+    // 渲染平行光的深度贴图
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, directDepthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    renderObjects(shadowMappingShader);
+    player->render(shadowMappingShader);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+
+    // 设置着色器
+    shadowMappingShader->use();
+    shadowMappingShader->setMat4("lightSpaceMatrix", spotSpaceMatrix);
+
+    // 渲染聚光的深度贴图
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, spotDepthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShader);
     player->render(shadowMappingShader);
@@ -113,8 +154,6 @@ void World::render() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // 使用深度贴图渲染场景
-    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     modelShader->use();
     glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
     glm::mat4 view = camera->GetViewMatrix();
@@ -122,7 +161,8 @@ void World::render() {
     modelShader->setMat4("model", glm::mat4(1.0f));
     modelShader->setMat4("view", view);
     modelShader->setMat4("projection", projection);
-    modelShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    modelShader->setMat4("directSpaceMatrix", directSpaceMatrix);
+    modelShader->setMat4("spotSpaceMatrix", spotSpaceMatrix);
     modelShader->setVec3("viewPos", camera->Position);
     
     if (isDay){
@@ -158,21 +198,27 @@ void World::render() {
     modelShader->setVec3("spot_light.position", camera->Position);
     modelShader->setVec3("spot_light.direction", camera->Front);
     modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
-    modelShader->setVec3("spot_light.diffuse", 1.0f, 1.0f, 1.0f);
+    modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
     modelShader->setVec3("spot_light.specular", 1.0f, 1.0f, 1.0f);
     modelShader->setFloat("spot_light.constant", 1.0f);
-    modelShader->setFloat("spot_light.linear", 0.09);
-    modelShader->setFloat("spot_light.quadratic", 0.032);
+    modelShader->setFloat("spot_light.linear", 0.027);
+    modelShader->setFloat("spot_light.quadratic", 0.0028);
     modelShader->setFloat("spot_light.cutOff", glm::cos(glm::radians(12.5f)));
     modelShader->setFloat("spot_light.outerCutOff", glm::cos(glm::radians(15.0f)));
 
     glActiveTexture(GL_TEXTURE0 + 2);
-    modelShader->setInt("texture_shadowMap", 2);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
+    modelShader->setInt("texture_shadowMap1", 2);
+    glBindTexture(GL_TEXTURE_2D, directDepthMap);
+
+    glActiveTexture(GL_TEXTURE0 + 3);
+    modelShader->setInt("texture_shadowMap2", 3);
+    glBindTexture(GL_TEXTURE_2D, spotDepthMap);
 
     // 绘制场景
+    glEnable(GL_CULL_FACE);
     renderObjects(modelShader);
     player->render(modelShader);
+    glDisable(GL_CULL_FACE);
 
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
@@ -219,7 +265,7 @@ void World::render() {
     water->waterShader->setVec3("viewPos", camera->Position);
     water->waterShader->setVec3("deepWaterColor", glm::vec3(0.1137f, 0.2745f, 0.4392f));
     // shader.setVec3("lightDir", glm::vec3(-1.0f, -1.0f, 2.0f));
-    water->waterShader->setVec3("lightDir", glm::vec3(100.0f, 40.0f, 0.0f));
+    water->waterShader->setVec3("lightDir", sun->GetLightDirection());
     water->waterShader->setInt("waveMapCount", 0);
     // 渲染水面
     water->renderWater();
@@ -239,20 +285,17 @@ void World::renderObjects(Shader* shader) {
 */
 void World::renderSun()
 {
-    
-    setTime(time + 1);
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi;
     sun->Render(angle);
 }
 
 /**
- * @brief 渲染太阳
+ * @brief 渲染月亮
  * @param shader 渲染使用的着色器
 */
 void World::renderMoon()
 {
-    setTime(time + 1);
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi - _pi;
     moon->Render(angle);
