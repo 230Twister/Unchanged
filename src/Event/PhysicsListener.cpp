@@ -20,5 +20,13 @@ void PhysicsListener::handle() {
 	Player* player = world->getPlayer();
 	player->setPosition(position);
 	player->setYaw(-player->getCamera()->Yaw);
-	player->getCamera()->Position = glm::vec3(pos.getX(), pos.getY() + 2.0f, pos.getZ());
+	// cout << 2.4f * cos(glm::radians(player->getCamera()->Yaw)) << " " << sin(glm::radians(player->getCamera()->Yaw)) << endl;
+	if (0) {
+		player->getCamera()->Position = glm::vec3(pos.getX() - 3.0f * cos(glm::radians(player->getCamera()->Yaw)), pos.getY() + 2.0f, pos.getZ() - 3.0f * sin(glm::radians(player->getCamera()->Yaw)));
+	}
+	else {
+		player->getCamera()->Position = glm::vec3(pos.getX() + 0.1f * sin(glm::radians(player->getCamera()->Yaw)), pos.getY() + 0.6f , pos.getZ() + 0.1f * sin(glm::radians(player->getCamera()->Yaw)));
+	}
+	// player->getCamera()->Position =  glm::vec3(pos.getX(), pos.getY() + 1.8f, pos.getZ() + 2.4f );
+	// cout << player->getCamera()->Yaw << endl;
 }
