@@ -3,7 +3,10 @@
 
 Player::Player() {
 	camera = new Camera(glm::vec3(0.0f, 50.0f, 0.0f));
-	model = new Model("../../../world_model/player/models.obj");
+	// model = new Model("../../../world_model/player/models.obj");
+	// model = new Model("../../../world_model/player/models.obj");
+	// model = new Model("../../../world_model/player/Model_Src.obj");
+	model = new Model("../../../world_model/player/player.obj");
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	health = 20;
 }

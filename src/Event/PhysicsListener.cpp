@@ -14,7 +14,7 @@ void PhysicsListener::handle() {
 	World* world = physicsEvent->getWorld();
 
 	btTransform& transform = physics->getTransform(1);
-	glm::vec3 position = glm::vec3(transform.getOrigin().getX() + 15, transform.getOrigin().getY(), transform.getOrigin().getZ());
+	glm::vec3 position = glm::vec3(transform.getOrigin().getX(), transform.getOrigin().getY(), transform.getOrigin().getZ());
 	
 	Player* player = world->getPlayer();
 	player->setPosition(position);

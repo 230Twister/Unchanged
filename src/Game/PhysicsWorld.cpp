@@ -19,7 +19,7 @@ void PhysicsWorld::addCharator(Model* model, btVector3 orgin) {
     ghostObject = new btPairCachingGhostObject();
 
     // 建立碰撞形状
-    btConvexShape* modelShape = new btCapsuleShape(0.8f, 1.5f);
+    btConvexShape* modelShape = new btCapsuleShape(0.8f, 0.5f);
     collisionShapes.push_back(modelShape);
 
     // 建立变换矩阵
@@ -137,7 +137,7 @@ void PhysicsWorld::characterWalk(WalkDirection direction, float deltaTime) {
 
     btVector3 walkDirection = btVector3(0.0, 0.0, 0.0);
     btScalar walkVelocity = btScalar(1.1) * 8.0;        // 4 km/h -> 1.1 m/s
-    btScalar walkSpeed = walkVelocity * deltaTime * 2.0f;
+    btScalar walkSpeed = walkVelocity * deltaTime * 1.0f;
 
     if (direction == WalkDirection::RIGHT) {
         walkDirection += forwardDir;

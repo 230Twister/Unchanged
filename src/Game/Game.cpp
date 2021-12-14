@@ -12,7 +12,7 @@ void Game::init() {
 	physics = new PhysicsWorld();
 	
 	physics->addRigidBody(world->getBaseModel());
-	physics->addCharator(player->getBaseModel(), btVector3(-15, 50, 0));
+	physics->addCharator(player->getBaseModel(), btVector3(0, 50, 0));
 	
 	world->addEntity(player);
 	world->setCamera(player->getCamera());
