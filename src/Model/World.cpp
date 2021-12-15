@@ -2,8 +2,7 @@
 #include "Model/World.h"
 #include "Model/SkyBox.h"
 #include "Model/Water.h"
-#include "Model/Sun.h"
-#include "Model/Moon.h"
+#include "Model/Star.h"
 #include "Game/PhysicsWorld.h"
 #include "Model/Player.h"
 #include <GLFW/glfw3.h>
@@ -16,8 +15,8 @@ World::World(const char* world_obj) {
     model = new Model(world_obj);
     skybox = new SkyBox();
     water = new Water();
-    sun = new Sun();
-    moon = new Moon();
+    sun = new Star(glm::vec4(1.0f, 1.0f, 0.7f, 1.0f), 15.0f, 300.0f);
+    moon = new Star(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 10.0f, 300.0f);
     loadDepthMap();
 }
 
@@ -232,21 +231,21 @@ void World::render() {
 
     // ∞◊ÃÏÃ´—Ù£¨ÕÌ…œ‘¬¡¡
     if (isDay){
-		sun->sunShader->use();
+		sun->shader->use();
 		projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 		view = camera->GetViewMatrix();
-        sun->sunShader->setMat4("view", view);
-        sun->sunShader->setMat4("projection", projection);
+        sun->shader->setMat4("view", view);
+        sun->shader->setMat4("projection", projection);
 
 		// ‰÷»æÃ´—Ù
 		renderSun();
     }
     else{
-        moon->moonShader->use();
+        moon->shader->use();
         projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         view = camera->GetViewMatrix();
-        moon->moonShader->setMat4("view", view);
-        moon->moonShader->setMat4("projection", projection);
+        moon->shader->setMat4("view", view);
+        moon->shader->setMat4("projection", projection);
 
         // ‰÷»æ‘¬¡¡
         renderMoon();
