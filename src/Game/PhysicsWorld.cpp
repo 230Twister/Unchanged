@@ -33,10 +33,10 @@ void PhysicsWorld::addCharator(Model* model, btVector3 orgin) {
     overlappingPairCache->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
 
     character = new btKinematicCharacterController(ghostObject, modelShape, btScalar(0.5f));
-    character->setGravity(btVector3(0, -20, 0));
+    character->setGravity(btVector3(0, -10, 0));
     character->setStepHeight(btScalar(0.2f));
-    character->setJumpSpeed(btScalar(1.1) * 5);
-    character->setFallSpeed(btScalar(1.1) * 10);
+    character->setJumpSpeed(btScalar(1.1) * 4);
+    character->setFallSpeed(btScalar(1.1) * 8);
 
     dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter,
         btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);

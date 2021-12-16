@@ -18,7 +18,7 @@ void Game::init() {
 	world->setCamera(player->getCamera());
 
 	// ×¢²á¼àÌýÆ÷
-	listenerManager.registerListener(new KeyBoardListener(), &KeyBoardEvent(NULL, NULL, 0, 0.0f));
+	listenerManager.registerListener(new KeyBoardListener(), &KeyBoardEvent(NULL, NULL, 0, 0, 0.0f));
 	listenerManager.registerListener(new PhysicsListener(), &PhysicsEvent(NULL, NULL));
 }
 
@@ -38,19 +38,25 @@ void Game::processInput(GLFWwindow* window) {
 
 	physics->characterStop();
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_W, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_W, 1, deltaTime).call();
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_S, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_S, 1,deltaTime).call();
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_A, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_A,1, deltaTime).call();
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_D, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_D, 1,deltaTime).call();
 	}
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_SPACE, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_SPACE,1, deltaTime).call();
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_G) ==  GLFW_PRESS) {
+		KeyBoardEvent(world, physics, GLFW_KEY_G,1, deltaTime).call();
+	}else if(glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE) {
+		KeyBoardEvent(world, physics, GLFW_KEY_G, 0, deltaTime).call();
 	}
 }
 

@@ -11,6 +11,7 @@ void KeyBoardListener::handle() {
 	Camera* camera = keyBoardEvent->getWorld()->getCamera();
 	PhysicsWorld* physics = keyBoardEvent->getPhysicsWorld();
 	int key = keyBoardEvent->getKey();
+	int action = keyBoardEvent->getAction();
 	float delta_time = keyBoardEvent->getDeltaTime();
 
 	if (key == GLFW_KEY_W) {
@@ -31,6 +32,13 @@ void KeyBoardListener::handle() {
 	}
 	else if (key == GLFW_KEY_SPACE) {
 		physics->characterJump();
+	}
+	else if (key == GLFW_KEY_G) {
+		if (action == 1) {
+			keyBoardEvent->getWorld()->getPlayer()->transViewMode();
+		}else {
+			keyBoardEvent->getWorld()->getPlayer()->transEna();
+		}
 	}
 	else {
 		physics->characterStop();

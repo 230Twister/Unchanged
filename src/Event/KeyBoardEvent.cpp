@@ -4,10 +4,11 @@
 
 HandleList KeyBoardEvent::handleList;
 
-KeyBoardEvent::KeyBoardEvent(World* _world, PhysicsWorld* _physics, int _key, float _delta) {
+KeyBoardEvent::KeyBoardEvent(World* _world, PhysicsWorld* _physics, int _key, int _action, float _delta) {
 	world = _world;
 	physicsWorld = _physics;
 	key = _key;
+	action = _action;
 	deltaTime = _delta;
 }
 

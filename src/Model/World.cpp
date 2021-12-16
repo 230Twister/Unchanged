@@ -195,7 +195,8 @@ void World::render() {
         modelShader->setVec3("direction_light.specular", glm::vec3(0.3f, 0.3f, 0.3f));
     }
 
-    modelShader->setVec3("spot_light.position", camera->Position);
+    // modelShader->setVec3("spot_light.position", camera->Position);
+    modelShader->setVec3("spot_light.position", player->getPosition());
     modelShader->setVec3("spot_light.direction", camera->Front);
     modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
     modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
