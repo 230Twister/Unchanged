@@ -1,9 +1,9 @@
-#include"Model/Sun.h"
+#include "Model/Star.h"
 
-Sun::Sun(glm::vec4 c, GLfloat r, GLfloat t)
+Star::Star(glm::vec4 c, GLfloat r, GLfloat t)
 {
     memset(vertices, 0, sizeof(vertices));
-    sunLightDirection = glm::vec3(-1.0f, 0.0f, 0.0f);
+    lightDirection = glm::vec3(-1.0f, 0.0f, 0.0f);
     color = c;
     radius = r;
     trackRadius = t;
@@ -46,11 +46,11 @@ Sun::Sun(glm::vec4 c, GLfloat r, GLfloat t)
             offset += 4;
         }
     }
-    sunShader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
+    shader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
     LoadSun();
 }
 
-glm::vec3 Sun::GetPoint(GLfloat u, GLfloat v)
+glm::vec3 Star::GetPoint(GLfloat u, GLfloat v)
 {
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     GLfloat z = radius * cos(_pi * u);
@@ -59,34 +59,34 @@ glm::vec3 Sun::GetPoint(GLfloat u, GLfloat v)
     return glm::vec3(x, y, z);
 }
 
-void Sun::Render(float a)
+void Star::Render(float a)
 {
-    glBindVertexArray(sunVAO);
+    glBindVertexArray(VAO);
     // 计算太阳位置并渲染
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, glm::vec3(trackRadius * cos(a), trackRadius * sin(a), 0.0f));
-    glUniformMatrix4fv(glGetUniformLocation(sunShader->getID(), "model"), 1, GL_FALSE, value_ptr(model));
+    glUniformMatrix4fv(glGetUniformLocation(shader->getID(), "model"), 1, GL_FALSE, value_ptr(model));
 
-    glDrawArrays(GL_TRIANGLES, 0, 6 * Sun::lats * Sun::lons);
+    glDrawArrays(GL_TRIANGLES, 0, 6 * Star::lats * Star::lons);
 
     // 修改光线方向
-    sunLightDirection.x = cos(a);
-    sunLightDirection.y = sin(a);
+    lightDirection.x = cos(a);
+    lightDirection.y = sin(a);
     glBindVertexArray(0);
 }
 
-glm::vec3 Sun::GetLightDirection()
+glm::vec3 Star::GetLightDirection()
 {
-    return sunLightDirection;
+    return lightDirection;
 }
 
-void Sun::LoadSun()
+void Star::LoadSun()
 {
-    glGenVertexArrays(1, &sunVAO);
-    glGenBuffers(1, &sunVBO);
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
 
-    glBindVertexArray(sunVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, sunVBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);

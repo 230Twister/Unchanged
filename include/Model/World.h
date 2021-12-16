@@ -7,8 +7,7 @@
 
 class SkyBox;
 class Water;
-class Sun;
-class Moon;
+class Star;
 class Player;
 
 class World{
@@ -19,8 +18,8 @@ private:
 	Model* model;
 	Player* player;
 
-	Sun* sun;
-	Moon* moon;
+	Star* sun;
+	Star* moon;
 
 	unsigned int time;					// 当前时间
 	static const int DAY_TIME = 3600;	// 一天的时间
