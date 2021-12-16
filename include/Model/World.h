@@ -9,6 +9,7 @@ class SkyBox;
 class Water;
 class Star;
 class Player;
+class Zombie;
 
 class World{
 private:
@@ -17,6 +18,7 @@ private:
 
 	Model* model;
 	Player* player;
+	std::vector<Zombie*> zombies;
 
 	Star* sun;
 	Star* moon;
@@ -55,7 +57,8 @@ public:
 	void render();
 
 	Model* getBaseModel();
-	void addEntity(Player*);
+	void addPlayer(Player*);
+	void addZombie(Zombie*);
 
 	Camera* getCamera() {
 		return camera;

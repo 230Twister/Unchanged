@@ -12,9 +12,9 @@ void Game::init() {
 	physics = new PhysicsWorld();
 	
 	physics->addRigidBody(world->getBaseModel());
-	physics->addCharator(player->getBaseModel(), btVector3(0, 50, 0));
+	physics->addCharator(player->getBaseModel(), btVector3(0, 50, 0), 0);
 	
-	world->addEntity(player);
+	world->addPlayer(player);
 	world->setCamera(player->getCamera());
 
 	// ×¢²á¼àÌýÆ÷
@@ -55,7 +55,8 @@ void Game::processInput(GLFWwindow* window) {
 
 	if (glfwGetKey(window, GLFW_KEY_G) ==  GLFW_PRESS) {
 		KeyBoardEvent(world, physics, GLFW_KEY_G,1, deltaTime).call();
-	}else if(glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE) {
+	}
+	else if(glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE) {
 		KeyBoardEvent(world, physics, GLFW_KEY_G, 0, deltaTime).call();
 	}
 }

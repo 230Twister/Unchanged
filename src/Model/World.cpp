@@ -303,10 +303,18 @@ void World::renderMoon()
 
 
 /**
- * @brief 给世界添加实体
+ * @brief 给世界添加玩家
 */
-void World::addEntity(Player* player) {
+void World::addPlayer(Player* player) {
     this->player = player;
+}
+
+/**
+ * @brief 给世界添加僵尸实体
+ * @param  
+*/
+void World::addZombie(Zombie* zombie) {
+    zombies.push_back(zombie);
 }
 
 void World::setCamera(Camera* camera) {
@@ -344,4 +352,8 @@ World::~World() {
     delete sun;
     delete skybox;
     delete water;
+
+    for (Zombie* zombie : zombies) {
+        delete zombie;
+    }
 }
