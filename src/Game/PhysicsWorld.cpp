@@ -12,7 +12,7 @@ PhysicsWorld::PhysicsWorld() {
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));        // 设置重力加速度 Y向下
 }
 
-void PhysicsWorld::addCharator(Model* model, btVector3 orgin, int index) {
+void PhysicsWorld::addCharator(btVector3 orgin, int index) {
     btPairCachingGhostObject* ghostObject = new btPairCachingGhostObject();
     ghostObject->setUserIndex(index);
 

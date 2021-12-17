@@ -7,6 +7,8 @@
 #include "Event/ListenerManager.h"
 #include <GLFW/glfw3.h>
 
+class Zombie;
+
 class Game {
 private:
 	World* world;
@@ -23,6 +25,7 @@ public:
 
 	void processInput(GLFWwindow*);
 	void loop();
+	void spawnZombie();
 	Camera* getCamera() {
 		return player->getCamera();
 	}

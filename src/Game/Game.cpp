@@ -2,6 +2,7 @@
 #include "Event/Event.h"
 #include "Event/Listener.h"
 #include "Event/HandleList.h"
+#include "Model/Zombie.h"
 
 /**
  * @brief ÓÎÏ·³õÊ¼»¯
@@ -12,7 +13,7 @@ void Game::init() {
 	physics = new PhysicsWorld();
 	
 	physics->addRigidBody(world->getBaseModel());
-	physics->addCharator(player->getBaseModel(), btVector3(0, 50, 0), 0);
+	physics->addCharator(btVector3(0, 50, 0), 0);
 	
 	world->addPlayer(player);
 	world->setCamera(player->getCamera());
@@ -79,6 +80,13 @@ void Game::loop() {
 		frame = currentFrame;
 		world->setTime(world->getTime() + 1);
 	}
+}
+
+void Game::spawnZombie() {
+	Zombie* zombie = new Zombie(glm::vec3(10, 50, 0));
+
+	world->addZombie(zombie);
+	physics->addCharator(btVector3(10, 50, 0), 1);
 }
 
 Game::~Game() {

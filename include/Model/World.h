@@ -14,6 +14,7 @@ class Zombie;
 class World{
 private:
 	const unsigned int SHADOW_WIDTH = 4096, SHADOW_HEIGHT = 4096;	// 定义深度贴图分辨率	
+	const unsigned int SPOT_SHADOW_WIDTH = 1024, SPOT_SHADOW_HEIGHT = 1024;	// 定义深度贴图分辨率	
 	const unsigned int SCR_WIDTH = 1200, SCR_HEIGHT = 800;			//定义窗口大小
 
 	Model* model;

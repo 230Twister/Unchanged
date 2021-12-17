@@ -54,7 +54,7 @@ void World::loadDepthMap() {
     // 创建2D纹理
     glGenTextures(1, &spotDepthMap);
     glBindTexture(GL_TEXTURE_2D, spotDepthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SPOT_SHADOW_WIDTH, SPOT_SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -92,7 +92,7 @@ void World::calculateLightSpaceMatrix() {
     directSpaceMatrix = lightProjection * lightView;
 
     lightProjection = glm::perspective(glm::radians(90.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    lightView = glm::lookAt(camera->Position, camera->Position + camera->Front, glm::vec3(0.0, 1.0, 0.0));
+    lightView = glm::lookAt(player->getPosition(), player->getPosition() + camera->Front, glm::vec3(0.0, 1.0, 0.0));
     spotSpaceMatrix = lightProjection * lightView;
 }
 
@@ -109,6 +109,7 @@ void World::renderDepthMap() {
     // 设置着色器
     shadowMappingShader->use();
     shadowMappingShader->setMat4("lightSpaceMatrix", directSpaceMatrix);
+    shadowMappingShader->setMat4("model", glm::mat4(1.0f));
 
     // 渲染平行光的深度贴图
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -127,9 +128,10 @@ void World::renderDepthMap() {
     // 设置着色器
     shadowMappingShader->use();
     shadowMappingShader->setMat4("lightSpaceMatrix", spotSpaceMatrix);
+    shadowMappingShader->setMat4("model", glm::mat4(1.0f));
 
     // 渲染聚光的深度贴图
-    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glViewport(0, 0, SPOT_SHADOW_WIDTH, SPOT_SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, spotDepthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShader);

@@ -26,7 +26,7 @@ private:
 	std::vector<std::vector<float>*> meshVertices;
 public:
 	PhysicsWorld();
-	void addCharator(Model*, btVector3, int);
+	void addCharator(btVector3, int);
 	void addRigidBody(Model*);
 
 	void characterJump();
