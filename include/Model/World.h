@@ -39,6 +39,19 @@ private:
 	unsigned int spotDepthMap;			// 聚光深度贴图
 	unsigned int spotDepthMapFBO;		// 聚光深度帧缓冲
 
+	//点阴影部分
+	float near_plane = 0.1f;
+	float far_plane = 25.0f;
+
+	std::vector<glm::mat4> shadowTransforms;//
+
+	Shader* shadowMappingShaderPoint;	// 点阴影深度贴图着色器
+
+	unsigned int depthMapPoint;			// 深度贴图
+	unsigned int depthMapFBOPoint;		// 深度帧缓冲
+	glm::vec3 lightPos = glm::vec3(70.0, 10.0, 50.0);				//点光源位置
+	//点阴影部分结束
+
 	Camera* camera;						// 摄像机
 
 	SkyBox* skybox;
