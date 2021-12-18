@@ -220,6 +220,8 @@ void World::render() {
     player->render(modelShader);
     glDisable(GL_CULL_FACE);
 
+    // 根据时间更新天空盒贴图
+    skybox->renewSkybox(time);
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
     skybox->skyboxShader->use();
