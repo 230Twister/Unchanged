@@ -15,6 +15,8 @@ private:
 	glm::vec3 position;	// 玩家所在坐标
 	float yaw;
 	int health;			// 血量
+	int view_mode;
+	int view_mode_trans_ena;
 
 public:
 	Player();
@@ -23,9 +25,13 @@ public:
 
 	void setPosition(glm::vec3);
 	void setYaw(float);
+	void transViewMode();
+	void transEna();
 
+	glm::vec3 getPosition();
 	Camera* getCamera();
 	Model* getBaseModel() { return model; }
+	int getViewMode() { return view_mode; }
 	~Player();
 };
 

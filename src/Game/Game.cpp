@@ -2,6 +2,7 @@
 #include "Event/Event.h"
 #include "Event/Listener.h"
 #include "Event/HandleList.h"
+#include "Model/Zombie.h"
 
 /**
  * @brief 游戏初始化
@@ -12,13 +13,13 @@ void Game::init() {
 	physics = new PhysicsWorld();
 	
 	physics->addRigidBody(world->getBaseModel());
-	physics->addCharator(player->getBaseModel(), btVector3(0, 50, 0));
+	physics->addCharator(btVector3(0, 50, 0), 0);
 	
-	world->addEntity(player);
+	world->addPlayer(player);
 	world->setCamera(player->getCamera());
 
 	// 注册监听器
-	listenerManager.registerListener(new KeyBoardListener(), &KeyBoardEvent(NULL, NULL, 0, 0.0f));
+	listenerManager.registerListener(new KeyBoardListener(), &KeyBoardEvent(NULL, NULL, 0, 0, 0.0f));
 	listenerManager.registerListener(new PhysicsListener(), &PhysicsEvent(NULL, NULL));
 }
 
@@ -38,19 +39,26 @@ void Game::processInput(GLFWwindow* window) {
 
 	physics->characterStop();
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_W, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_W, 1, deltaTime).call();
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_S, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_S, 1,deltaTime).call();
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_A, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_A,1, deltaTime).call();
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_D, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_D, 1,deltaTime).call();
 	}
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_SPACE, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_SPACE,1, deltaTime).call();
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_G) ==  GLFW_PRESS) {
+		KeyBoardEvent(world, physics, GLFW_KEY_G,1, deltaTime).call();
+	}
+	else if(glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE) {
+		KeyBoardEvent(world, physics, GLFW_KEY_G, 0, deltaTime).call();
 	}
 }
 
@@ -68,10 +76,17 @@ void Game::loop() {
 
 	// 时间更新
 	GLfloat currentFrame = glfwGetTime();
-	if (currentFrame - frame >= 0.1f) {
+	if (currentFrame - frame >= 0.2f) {
 		frame = currentFrame;
 		world->setTime(world->getTime() + 1);
 	}
+}
+
+void Game::spawnZombie() {
+	Zombie* zombie = new Zombie(glm::vec3(10, 50, 0));
+
+	world->addZombie(zombie);
+	physics->addCharator(btVector3(10, 50, 0), 1);
 }
 
 Game::~Game() {

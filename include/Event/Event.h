@@ -38,17 +38,19 @@ private:
 	static HandleList handleList;
 
 	int key;
+	int action;	// 1 位按下 0 为释放
 	World* world;
 	PhysicsWorld* physicsWorld;
 	float deltaTime;
 
 public:
 
-	KeyBoardEvent(World*, PhysicsWorld*, int, float);
+	KeyBoardEvent(World*, PhysicsWorld*, int,int, float);
 	World* getWorld();
 	PhysicsWorld* getPhysicsWorld();
 	int getKey();
 	float getDeltaTime();
+	int getAction() { return action; }
 
 	void addListener(Listener*);
 	void call();

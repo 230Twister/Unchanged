@@ -10,13 +10,11 @@ PhysicsWorld::PhysicsWorld() {
 	dynamicsWorld = new btDiscreteDynamicsWorld(
 		dispatcher, overlappingPairCache, solver, collisionConfiguration);
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));        // 设置重力加速度 Y向下
-
-    ghostObject = NULL;
-    character = NULL;
 }
 
-void PhysicsWorld::addCharator(Model* model, btVector3 orgin) {
-    ghostObject = new btPairCachingGhostObject();
+void PhysicsWorld::addCharator(btVector3 orgin, int index) {
+    btPairCachingGhostObject* ghostObject = new btPairCachingGhostObject();
+    ghostObject->setUserIndex(index);
 
     // 建立碰撞形状
     btConvexShape* modelShape = new btCapsuleShape(0.5f, 0.5f);
@@ -32,15 +30,17 @@ void PhysicsWorld::addCharator(Model* model, btVector3 orgin) {
     ghostObject->setCollisionFlags(btCollisionObject::CF_CHARACTER_OBJECT);
     overlappingPairCache->getOverlappingPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
 
-    character = new btKinematicCharacterController(ghostObject, modelShape, btScalar(0.5f));
-    character->setGravity(btVector3(0, -20, 0));
-    character->setStepHeight(btScalar(0.2f));
-    character->setJumpSpeed(btScalar(1.1) * 5);
-    character->setFallSpeed(btScalar(1.1) * 10);
+    btKinematicCharacterController* character = new btKinematicCharacterController(ghostObject, modelShape, btScalar(0.5f));
+    character->setGravity(btVector3(0, -10, 0));
+    character->setStepHeight(btScalar(0.1f));
+    character->setJumpSpeed(btScalar(1.1) * 3);
 
     dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter,
         btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
     dynamicsWorld->addAction(character);
+
+    m_character.push_back(character);
+    m_ghostObject.push_back(ghostObject);
 }
 
 void PhysicsWorld::addRigidBody(Model* model) {
@@ -124,8 +124,8 @@ void PhysicsWorld::stepSimulation() {
  * @brief 角色跳跃动作
 */
 void PhysicsWorld::characterJump() {
-    if (character->onGround()) {
-        character->jump();
+    if (m_character[0]->onGround()) {
+        m_character[0]->jump();
     }
 }
 
@@ -134,7 +134,7 @@ void PhysicsWorld::characterJump() {
  * @param direction 移动方向 
 */
 void PhysicsWorld::characterWalk(WalkDirection direction, float deltaTime) {
-    btTransform& transform = ghostObject->getWorldTransform();
+    btTransform& transform = m_ghostObject[0]->getWorldTransform();
     btVector3 forwardDir = transform.getBasis()[2];
 
     btVector3 walkDirection = btVector3(0.0, 0.0, 0.0);
@@ -156,7 +156,7 @@ void PhysicsWorld::characterWalk(WalkDirection direction, float deltaTime) {
         walkDirection -= forwardDir;
     }
 
-    character->setWalkDirection(walkDirection * walkSpeed);
+    m_character[0]->setWalkDirection(walkDirection * walkSpeed);
 }
 
 /**
@@ -165,11 +165,11 @@ void PhysicsWorld::characterWalk(WalkDirection direction, float deltaTime) {
 */
 void PhysicsWorld::updateCharacterFront(float yaw) {
     yaw -= 90.0f;
-    ghostObject->getWorldTransform().getBasis().setRotation(btQuaternion(btVector3(0, 1, 0), glm::radians(yaw)));
+    m_ghostObject[0]->getWorldTransform().getBasis().setRotation(btQuaternion(btVector3(0, 1, 0), glm::radians(yaw)));
 }
 
 void PhysicsWorld::characterStop() {
-    character->setWalkDirection(btVector3(0.0, 0.0, 0.0));
+    m_character[0]->setWalkDirection(btVector3(0.0, 0.0, 0.0));
 }
 
 PhysicsWorld::~PhysicsWorld() {
@@ -181,10 +181,19 @@ PhysicsWorld::~PhysicsWorld() {
     }
 
     // 清理角色
-    dynamicsWorld->removeCollisionObject(ghostObject);
-    dynamicsWorld->removeAction(character);
-    delete ghostObject;
-    delete character;
+    for (btPairCachingGhostObject* e : m_ghostObject) {
+        dynamicsWorld->removeCollisionObject(e);
+    }
+    for (btKinematicCharacterController* e : m_character) {
+        dynamicsWorld->removeAction(e);
+    }
+    for (btPairCachingGhostObject* e : m_ghostObject) {
+        delete e;
+    }
+    for (btKinematicCharacterController* e : m_character) {
+        delete e;
+    }
+    
     for (std::vector<float>* vertices : meshVertices) {
         delete vertices;
     }

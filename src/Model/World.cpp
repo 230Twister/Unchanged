@@ -2,10 +2,10 @@
 #include "Model/World.h"
 #include "Model/SkyBox.h"
 #include "Model/Water.h"
-#include "Model/Sun.h"
-#include "Model/Moon.h"
+#include "Model/Star.h"
 #include "Game/PhysicsWorld.h"
 #include "Model/Player.h"
+#include "ShadowMap.h"
 #include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
@@ -16,8 +16,10 @@ World::World(const char* world_obj) {
     model = new Model(world_obj);
     skybox = new SkyBox();
     water = new Water();
-    sun = new Sun();
-    moon = new Moon();
+    sun = new Star(glm::vec4(1.0f, 1.0f, 0.7f, 1.0f), 15.0f, 300.0f);
+    moon = new Star(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 10.0f, 300.0f);
+    shadowMap = new ShadowMap();
+
     loadDepthMap();
 }
 
@@ -26,36 +28,15 @@ World::World(const char* world_obj) {
 * @brief 生成深度贴图
 */
 void World::loadDepthMap() {
-    /*****************平行光的深度贴图********************/
-    // 创建帧缓冲对象
-    glGenFramebuffers(1, &directDepthMapFBO);
-
-    // 创建2D纹理
-    glGenTextures(1, &directDepthMap);
-    glBindTexture(GL_TEXTURE_2D, directDepthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-    // 创建帧缓冲并绑定深度贴图
-    glBindFramebuffer(GL_FRAMEBUFFER, directDepthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, directDepthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     /*****************聚光的深度贴图********************/
+    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
     // 创建帧缓冲对象
     glGenFramebuffers(1, &spotDepthMapFBO);
 
     // 创建2D纹理
     glGenTextures(1, &spotDepthMap);
     glBindTexture(GL_TEXTURE_2D, spotDepthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SPOT_SHADOW_WIDTH, SPOT_SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -75,9 +56,8 @@ void World::loadDepthMap() {
 */
 void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
-    float near_plane = 0.1f, far_plane = 500.0f;
-    lightProjection = glm::ortho(-250.0f, 250.0f, -250.0f, 250.0f, near_plane, far_plane);
     glm::vec3 light_pos;
+
     if (time % DAY_TIME < DAY) {
         glm::vec3 light_dir = sun->GetLightDirection();
         light_dir *= 300;
@@ -89,11 +69,12 @@ void World::calculateLightSpaceMatrix() {
         light_pos = light_dir;
     }
     
-    lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-    directSpaceMatrix = lightProjection * lightView;
+    // 平行光
+    shadowMap->setup(camera, light_pos);
 
+    // 聚光
     lightProjection = glm::perspective(glm::radians(90.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    lightView = glm::lookAt(camera->Position, camera->Position + camera->Front, glm::vec3(0.0, 1.0, 0.0));
+    lightView = glm::lookAt(player->getPosition(), player->getPosition() + camera->Front, glm::vec3(0.0, 1.0, 0.0));
     spotSpaceMatrix = lightProjection * lightView;
 }
 
@@ -109,14 +90,12 @@ void World::renderDepthMap() {
 
     // 设置着色器
     shadowMappingShader->use();
-    shadowMappingShader->setMat4("lightSpaceMatrix", directSpaceMatrix);
 
-    // 渲染平行光的深度贴图
-    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, directDepthMapFBO);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    renderObjects(shadowMappingShader);
-    player->render(shadowMappingShader);
+    for (int i = 0; i < CSM_MAX_SPLITS; i++) {
+        shadowMap->transmit(shadowMappingShader, i);
+        renderObjects(shadowMappingShader);
+        player->render(shadowMappingShader);
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glCullFace(GL_BACK);
@@ -128,9 +107,10 @@ void World::renderDepthMap() {
     // 设置着色器
     shadowMappingShader->use();
     shadowMappingShader->setMat4("lightSpaceMatrix", spotSpaceMatrix);
+    shadowMappingShader->setMat4("model", glm::mat4(1.0f));
 
     // 渲染聚光的深度贴图
-    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glViewport(0, 0, SPOT_SHADOW_WIDTH, SPOT_SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, spotDepthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShader);
@@ -161,7 +141,6 @@ void World::render() {
     modelShader->setMat4("model", glm::mat4(1.0f));
     modelShader->setMat4("view", view);
     modelShader->setMat4("projection", projection);
-    modelShader->setMat4("directSpaceMatrix", directSpaceMatrix);
     modelShader->setMat4("spotSpaceMatrix", spotSpaceMatrix);
     modelShader->setVec3("viewPos", camera->Position);
     
@@ -195,7 +174,8 @@ void World::render() {
         modelShader->setVec3("direction_light.specular", glm::vec3(0.3f, 0.3f, 0.3f));
     }
 
-    modelShader->setVec3("spot_light.position", camera->Position);
+    // modelShader->setVec3("spot_light.position", camera->Position);
+    modelShader->setVec3("spot_light.position", player->getPosition());
     modelShader->setVec3("spot_light.direction", camera->Front);
     modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
     modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
@@ -206,12 +186,10 @@ void World::render() {
     modelShader->setFloat("spot_light.cutOff", glm::cos(glm::radians(12.5f)));
     modelShader->setFloat("spot_light.outerCutOff", glm::cos(glm::radians(15.0f)));
 
-    glActiveTexture(GL_TEXTURE0 + 2);
-    modelShader->setInt("texture_shadowMap1", 2);
-    glBindTexture(GL_TEXTURE_2D, directDepthMap);
+    shadowMap->transmitRenderData(modelShader);
 
-    glActiveTexture(GL_TEXTURE0 + 3);
-    modelShader->setInt("texture_shadowMap2", 3);
+    glActiveTexture(GL_TEXTURE0 + 6);
+    modelShader->setInt("texture_shadowMap2", 6);
     glBindTexture(GL_TEXTURE_2D, spotDepthMap);
 
     // 绘制场景
@@ -234,21 +212,21 @@ void World::render() {
 
     // 白天太阳，晚上月亮
     if (isDay){
-		sun->sunShader->use();
+		sun->shader->use();
 		projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
 		view = camera->GetViewMatrix();
-        sun->sunShader->setMat4("view", view);
-        sun->sunShader->setMat4("projection", projection);
+        sun->shader->setMat4("view", view);
+        sun->shader->setMat4("projection", projection);
 
 		// 渲染太阳
 		renderSun();
     }
     else{
-        moon->moonShader->use();
+        moon->shader->use();
         projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         view = camera->GetViewMatrix();
-        moon->moonShader->setMat4("view", view);
-        moon->moonShader->setMat4("projection", projection);
+        moon->shader->setMat4("view", view);
+        moon->shader->setMat4("projection", projection);
 
         // 渲染月亮
         renderMoon();
@@ -305,10 +283,18 @@ void World::renderMoon()
 
 
 /**
- * @brief 给世界添加实体
+ * @brief 给世界添加玩家
 */
-void World::addEntity(Player* player) {
+void World::addPlayer(Player* player) {
     this->player = player;
+}
+
+/**
+ * @brief 给世界添加僵尸实体
+ * @param  
+*/
+void World::addZombie(Zombie* zombie) {
+    zombies.push_back(zombie);
 }
 
 void World::setCamera(Camera* camera) {
@@ -342,8 +328,13 @@ Model* World::getBaseModel() {
 World::~World() {
     delete shadowMappingShader;
     delete modelShader;
+    delete shadowMap;
     delete model;
     delete sun;
     delete skybox;
     delete water;
+
+    for (Zombie* zombie : zombies) {
+        delete zombie;
+    }
 }

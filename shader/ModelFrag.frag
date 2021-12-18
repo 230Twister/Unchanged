@@ -36,15 +36,51 @@ out vec4 FragColor;
 in vec3 Normal;                     // 法向量
 in vec3 FragPos;                    // 片段坐标
 in vec2 TexCoords;                  // 纹理坐标
-in vec4 FragDirectSpacePos;         // 片段位于平行光空间的坐标
+in vec4 FragDirectSpacePos[4];      // 片段位于平行光空间的坐标
 in vec4 FragSpotSpacePos;           // 片段位于聚光空间的坐标
 
 uniform sampler2D texture_diffuse1;     // 漫反射贴图
 uniform sampler2D texture_specular1;    // 高光贴图
-uniform sampler2D texture_shadowMap1;   // 深度贴图
+uniform sampler2D texture_shadowMap[4]; // CSM深度贴图
 uniform sampler2D texture_shadowMap2;   // 深度贴图
+uniform vec3 farBounds;
 
-float caculateShadow(vec3 lightDir, vec4 FragLightSpacePos, sampler2D texture_shadowMap) {
+float CSMshadow() {
+    int index = 3;
+    if (gl_FragCoord.z < farBounds.x) {
+        index = 0;
+    }
+    else if (gl_FragCoord.z < farBounds.y) {
+        index = 1;
+    }
+    else if (gl_FragCoord.z < farBounds.z) {
+        index = 2;
+    }
+
+    // 获取采样坐标
+    vec3 projCoords = FragDirectSpacePos[index].xyz / FragDirectSpacePos[index].w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    // 比对当前片段深度与深度贴图上的深度值
+    float closestDepth = texture(texture_shadowMap[index], projCoords.xy).r;
+    float currentDepth = projCoords.z;
+
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / textureSize(texture_shadowMap[index], 0);
+    for(int x = -2; x <= 2; ++x) {
+        for(int y = -2; y <= 2; ++y) {
+            float pcfDepth = texture(texture_shadowMap[index], projCoords.xy + vec2(x, y) * texelSize).r; 
+            shadow += currentDepth > pcfDepth  ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 25.0;
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+
+    return shadow;
+}
+
+float caculateShadow(vec4 FragLightSpacePos, sampler2D texture_shadowMap) {
     // 获取采样坐标
     vec3 projCoords = FragLightSpacePos.xyz / FragLightSpacePos.w;
     projCoords = projCoords * 0.5 + 0.5;
@@ -106,7 +142,7 @@ vec3 getDirectionLight() {
     vec3 specular = direction_light.specular * (spec * model_specular);
 
     // 计算阴影
-    float shadow = (1.0 - caculateShadow(lightDir, FragDirectSpacePos, texture_shadowMap1));
+    float shadow = 1.0 - CSMshadow();
 
     return shadow * (diffuse + specular);
 }
@@ -133,7 +169,7 @@ vec3 getSpotLight() {
     vec3 specular = spot_light.specular * (spec * model_specular);
 
     // 计算阴影
-    float shadow = (1.0 - caculateShadow(lightDir, FragSpotSpacePos, texture_shadowMap2));
+    float shadow = (1.0 - caculateShadow(FragSpotSpacePos, texture_shadowMap2));
 
     // 计算衰减
     float distance    = length(spot_light.position - FragPos);
@@ -149,10 +185,8 @@ void main()
     // 环境光
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    vec3 result = ambient + getDirectionLight() + getSpotLight();
-
-    FragColor = vec4(result, 1.0f);
-
+    vec3 result = ambient + getDirectionLight();
     
+    FragColor = vec4(result, 1.0f);
 
 }

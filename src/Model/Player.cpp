@@ -9,6 +9,8 @@ Player::Player() {
 	model = new Model("../../../world_model/player/player.obj");
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	health = 20;
+	view_mode = 1;
+	view_mode_trans_ena = 1;
 }
 
 /**
@@ -23,6 +25,19 @@ void Player::render(Shader* shader) {
 	shader->setMat4("model", mat);
 
 	model->Draw(*shader);
+}
+
+glm::vec3 Player::getPosition() {
+	return this->position;
+}
+
+void Player::transViewMode() {
+	if(view_mode_trans_ena)	view_mode = 1 - view_mode;
+	view_mode_trans_ena = 0;
+}
+
+void Player::transEna() {
+	view_mode_trans_ena = 1;
 }
 
 void Player::setPosition(glm::vec3 pos) {

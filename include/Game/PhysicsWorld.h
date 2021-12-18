@@ -19,14 +19,14 @@ private:
 	btSequentialImpulseConstraintSolver* solver;
 	btDiscreteDynamicsWorld* dynamicsWorld;
 
-	btKinematicCharacterController* character;
-	btPairCachingGhostObject* ghostObject;
+	std::vector<btKinematicCharacterController*> m_character;
+	std::vector<btPairCachingGhostObject*> m_ghostObject;
 
 	btAlignedObjectArray<btCollisionShape*> collisionShapes;
 	std::vector<std::vector<float>*> meshVertices;
 public:
 	PhysicsWorld();
-	void addCharator(Model*, btVector3);
+	void addCharator(btVector3, int);
 	void addRigidBody(Model*);
 
 	void characterJump();
