@@ -2,7 +2,6 @@
 #include <glad/glad.h>
 #include <iostream>
 #include <stb_image.h>
-
 SkyBox::SkyBox() {
 	skyboxVertices = new float[108]{
 		-400.0f,  400.0f, -400.0f,
@@ -47,16 +46,8 @@ SkyBox::SkyBox() {
 		-400.0f, -400.0f,  400.0f,
 		 400.0f, -400.0f,  400.0f
 	};
-	faces = new std::string[6] {
-		"../../../skybox_img/right.jpg",
-		"../../../skybox_img/left.jpg",
-		"../../../skybox_img/top.jpg",
-		"../../../skybox_img/bottom.jpg",
-		"../../../skybox_img/back.jpg",
-		"../../../skybox_img/front.jpg"
-	};
+	faces = new std::string[6];
 	skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
-	loadSkybox();
 }
 
 SkyBox::~SkyBox() {
@@ -64,6 +55,43 @@ SkyBox::~SkyBox() {
 	delete [] faces;
 	delete skyboxShader;
 }
+
+void SkyBox::renewSkybox(unsigned int time) {
+	if (time % 3600 < 300) {
+		faces[0] = "../../../skybox_img/morning_right.jpg";
+		faces[1] = "../../../skybox_img/morning_left.jpg";
+		faces[2] = "../../../skybox_img/morning_top.jpg";
+		faces[3] = "../../../skybox_img/bottom.jpg";
+		faces[4] = "../../../skybox_img/morning_back.jpg";
+		faces[5] = "../../../skybox_img/morning_front.jpg";
+	}
+	else if (time % 3600 < 1500) {
+		faces[0] = "../../../skybox_img/midday_right.jpg";
+		faces[1] = "../../../skybox_img/midday_left.jpg";
+		faces[2] = "../../../skybox_img/midday_top.jpg";
+		faces[3] = "../../../skybox_img/bottom.jpg";
+		faces[4] = "../../../skybox_img/midday_back.jpg";
+		faces[5] = "../../../skybox_img/midday_front.jpg";
+	}
+	else if (time % 3600 < 1800) {
+		faces[0] = "../../../skybox_img/dusk_right.jpg";
+		faces[1] = "../../../skybox_img/dusk_left.jpg";
+		faces[2] = "../../../skybox_img/dusk_top.jpg";
+		faces[3] = "../../../skybox_img/bottom.jpg";
+		faces[4] = "../../../skybox_img/dusk_back.jpg";
+		faces[5] = "../../../skybox_img/dusk_front.jpg";
+	}
+	else {
+		faces[0] = "../../../skybox_img/night_right.jpg";
+		faces[1] = "../../../skybox_img/night_left.jpg";
+		faces[2] = "../../../skybox_img/night_top.jpg";
+		faces[3] = "../../../skybox_img/bottom.jpg";
+		faces[4] = "../../../skybox_img/night_back.jpg";
+		faces[5] = "../../../skybox_img/night_front.jpg";
+	}
+	loadSkybox();
+}
+
 
 /**
  * @brief ¼ÓÔØÌì¿ÕºÐ
