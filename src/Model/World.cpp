@@ -5,6 +5,7 @@
 #include "Model/Star.h"
 #include "Game/PhysicsWorld.h"
 #include "Model/Player.h"
+#include "ShadowMap.h"
 #include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
@@ -17,6 +18,8 @@ World::World(const char* world_obj) {
     water = new Water();
     sun = new Star(glm::vec4(1.0f, 1.0f, 0.7f, 1.0f), 15.0f, 300.0f);
     moon = new Star(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 10.0f, 300.0f);
+    shadowMap = new ShadowMap();
+
     loadDepthMap();
 }
 
@@ -25,29 +28,8 @@ World::World(const char* world_obj) {
 * @brief 生成深度贴图
 */
 void World::loadDepthMap() {
-    /*****************平行光的深度贴图********************/
-    // 创建帧缓冲对象
-    glGenFramebuffers(1, &directDepthMapFBO);
-
-    // 创建2D纹理
-    glGenTextures(1, &directDepthMap);
-    glBindTexture(GL_TEXTURE_2D, directDepthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-
-    // 创建帧缓冲并绑定深度贴图
-    glBindFramebuffer(GL_FRAMEBUFFER, directDepthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, directDepthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     /*****************聚光的深度贴图********************/
+    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
     // 创建帧缓冲对象
     glGenFramebuffers(1, &spotDepthMapFBO);
 
@@ -74,9 +56,8 @@ void World::loadDepthMap() {
 */
 void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
-    float near_plane = 0.1f, far_plane = 500.0f;
-    lightProjection = glm::ortho(-250.0f, 250.0f, -250.0f, 250.0f, near_plane, far_plane);
     glm::vec3 light_pos;
+
     if (time % DAY_TIME < DAY) {
         glm::vec3 light_dir = sun->GetLightDirection();
         light_dir *= 300;
@@ -88,9 +69,10 @@ void World::calculateLightSpaceMatrix() {
         light_pos = light_dir;
     }
     
-    lightView = glm::lookAt(light_pos, glm::vec3(0.0f), glm::vec3(0.0, 1.0, 0.0));
-    directSpaceMatrix = lightProjection * lightView;
+    // 平行光
+    shadowMap->setup(camera, light_pos);
 
+    // 聚光
     lightProjection = glm::perspective(glm::radians(90.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     lightView = glm::lookAt(player->getPosition(), player->getPosition() + camera->Front, glm::vec3(0.0, 1.0, 0.0));
     spotSpaceMatrix = lightProjection * lightView;
@@ -108,15 +90,12 @@ void World::renderDepthMap() {
 
     // 设置着色器
     shadowMappingShader->use();
-    shadowMappingShader->setMat4("lightSpaceMatrix", directSpaceMatrix);
-    shadowMappingShader->setMat4("model", glm::mat4(1.0f));
 
-    // 渲染平行光的深度贴图
-    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-    glBindFramebuffer(GL_FRAMEBUFFER, directDepthMapFBO);
-    glClear(GL_DEPTH_BUFFER_BIT);
-    renderObjects(shadowMappingShader);
-    player->render(shadowMappingShader);
+    for (int i = 0; i < CSM_MAX_SPLITS; i++) {
+        shadowMap->transmit(shadowMappingShader, i);
+        renderObjects(shadowMappingShader);
+        player->render(shadowMappingShader);
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glCullFace(GL_BACK);
@@ -162,7 +141,6 @@ void World::render() {
     modelShader->setMat4("model", glm::mat4(1.0f));
     modelShader->setMat4("view", view);
     modelShader->setMat4("projection", projection);
-    modelShader->setMat4("directSpaceMatrix", directSpaceMatrix);
     modelShader->setMat4("spotSpaceMatrix", spotSpaceMatrix);
     modelShader->setVec3("viewPos", camera->Position);
     
@@ -208,12 +186,10 @@ void World::render() {
     modelShader->setFloat("spot_light.cutOff", glm::cos(glm::radians(12.5f)));
     modelShader->setFloat("spot_light.outerCutOff", glm::cos(glm::radians(15.0f)));
 
-    glActiveTexture(GL_TEXTURE0 + 2);
-    modelShader->setInt("texture_shadowMap1", 2);
-    glBindTexture(GL_TEXTURE_2D, directDepthMap);
+    shadowMap->transmitRenderData(modelShader);
 
-    glActiveTexture(GL_TEXTURE0 + 3);
-    modelShader->setInt("texture_shadowMap2", 3);
+    glActiveTexture(GL_TEXTURE0 + 6);
+    modelShader->setInt("texture_shadowMap2", 6);
     glBindTexture(GL_TEXTURE_2D, spotDepthMap);
 
     // 绘制场景
@@ -350,6 +326,7 @@ Model* World::getBaseModel() {
 World::~World() {
     delete shadowMappingShader;
     delete modelShader;
+    delete shadowMap;
     delete model;
     delete sun;
     delete skybox;
