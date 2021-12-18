@@ -8,6 +8,7 @@ class SkyBox
 public:
 	Shader* skyboxShader;
 	void renderSkybox();
+	void renewSkybox(unsigned int time);
 	SkyBox();
 	~SkyBox();
 
