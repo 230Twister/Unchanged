@@ -17,7 +17,7 @@ private:
 public:
 	Weapon();
 
-	void Render(Shader*);
+	void Render(Shader*, float);
 	void SetPosition(glm::vec3);
 	void SetYaw(float);
 };
