@@ -108,7 +108,7 @@ void Game::loop() {
 
 	// 时间更新
 	GLfloat currentFrame = glfwGetTime();
-	if (currentFrame - frame >= 0.2f) {
+	if (currentFrame - frame >= 0.1f) {
 		frame = currentFrame;
 		world->setTime(world->getTime() + 1);
 	}
