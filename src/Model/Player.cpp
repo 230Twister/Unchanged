@@ -3,14 +3,12 @@
 
 Player::Player() {
 	camera = new Camera(glm::vec3(0.0f, 50.0f, 0.0f));
-	// model = new Model("../../../world_model/player/models.obj");
-	// model = new Model("../../../world_model/player/models.obj");
-	// model = new Model("../../../world_model/player/Model_Src.obj");
 	model = new Model("../../../world_model/player/player.obj");
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	health = 20;
 	view_mode = 1;
 	view_mode_trans_ena = 1;
+	yaw = 0.0f;
 }
 
 /**

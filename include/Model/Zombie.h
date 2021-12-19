@@ -17,6 +17,7 @@ public:
 	void init();
 
 	void render(Shader*);
+	void setPosition(glm::vec3);
 };
 
 #endif // !ZOMBIE_H

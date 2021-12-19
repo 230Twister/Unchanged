@@ -66,6 +66,9 @@ public:
 	Player* getPlayer() {
 		return player;
 	}
+	vector<Zombie*> getZombies() {
+		return zombies;
+	}
 
 	void setCamera(Camera*);
 	void setTime(unsigned int);		// …Ë÷√ ±º‰

@@ -17,13 +17,13 @@ void PhysicsWorld::addCharator(btVector3 orgin, int index) {
     ghostObject->setUserIndex(index);
 
     // 建立碰撞形状
-    btConvexShape* modelShape = new btCapsuleShape(0.5f, 0.1f);
+    btConvexShape* modelShape = new btCapsuleShape(0.5f, 0.2f);
     collisionShapes.push_back(modelShape);
 
     // 建立变换矩阵
     btTransform modelTransform;
     modelTransform.setIdentity();
-    modelTransform.setOrigin(orgin);        // 设置原点位置
+    modelTransform.setOrigin(orgin);
 
     ghostObject->setCollisionShape(modelShape);
     ghostObject->setWorldTransform(modelTransform);
@@ -36,11 +36,34 @@ void PhysicsWorld::addCharator(btVector3 orgin, int index) {
     character->setJumpSpeed(btScalar(1.1) * 3);
 
     dynamicsWorld->addCollisionObject(ghostObject, btBroadphaseProxy::CharacterFilter,
-        btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter);
+        btBroadphaseProxy::StaticFilter | btBroadphaseProxy::DefaultFilter | btBroadphaseProxy::CharacterFilter);
     dynamicsWorld->addAction(character);
 
     m_character.push_back(character);
     m_ghostObject.push_back(ghostObject);
+}
+
+void PhysicsWorld::addDynamicRigidBody(btVector3 orgin, int index) {
+    
+    // 建立碰撞形状
+    btConvexShape* modelShape = new btCapsuleShape(0.5f, 0.1f);
+    collisionShapes.push_back(modelShape);
+
+    // 建立变换矩阵
+    btTransform modelTransform;
+    modelTransform.setIdentity();
+    modelTransform.setOrigin(orgin);        // 设置原点位置
+
+    btScalar mass(45.0f);
+    btVector3 localInertia(0, 0, 0);        // 惯性
+    modelShape->calculateLocalInertia(mass, localInertia);
+
+    btDefaultMotionState* myMotionState = new btDefaultMotionState(modelTransform);
+    btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, modelShape, localInertia);
+    btRigidBody* rigidBody = new btRigidBody(rbInfo);
+    rigidBody->setUserIndex(index);
+
+    dynamicsWorld->addRigidBody(rigidBody);
 }
 
 void PhysicsWorld::addRigidBody(Model* model) {
@@ -82,8 +105,9 @@ void PhysicsWorld::addRigidBody(Model* model) {
     modelTransform.setIdentity();
     modelTransform.setOrigin(btVector3(0, 0, 0));        // 设置原点位置
 
+    // 设置质量
     btScalar mass(0.0f);
-    btVector3 localInertia(0, 0, 0);        // 惯性
+    btVector3 localInertia(0, 0, 0);
 
     // 运动状态
     btDefaultMotionState* myMotionState = new btDefaultMotionState(modelTransform);

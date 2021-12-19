@@ -5,6 +5,7 @@
 #include "Model/Star.h"
 #include "Game/PhysicsWorld.h"
 #include "Model/Player.h"
+#include "Model/Zombie.h"
 #include "ShadowMap.h"
 #include <GLFW/glfw3.h>
 
@@ -196,6 +197,9 @@ void World::render() {
     glEnable(GL_CULL_FACE);
     renderObjects(modelShader);
     player->render(modelShader);
+    for (auto it = zombies.begin(); it != zombies.end(); it++) {
+        (*it)->render(modelShader);
+    }
     glDisable(GL_CULL_FACE);
 
     // 传递天空盒数据
@@ -215,7 +219,6 @@ void World::render() {
 		view = camera->GetViewMatrix();
         sun->shader->setMat4("view", view);
         sun->shader->setMat4("projection", projection);
-
 		// 渲染太阳
 		renderSun();
     }
@@ -225,7 +228,6 @@ void World::render() {
         view = camera->GetViewMatrix();
         moon->shader->setMat4("view", view);
         moon->shader->setMat4("projection", projection);
-
         // 渲染月亮
         renderMoon();
     }
@@ -242,7 +244,6 @@ void World::render() {
     // Set fragment shader data
     water->waterShader->setVec3("viewPos", camera->Position);
     water->waterShader->setVec3("deepWaterColor", glm::vec3(0.1137f, 0.2745f, 0.4392f));
-    // shader.setVec3("lightDir", glm::vec3(-1.0f, -1.0f, 2.0f));
     water->waterShader->setVec3("lightDir", sun->GetLightDirection());
     water->waterShader->setInt("waveMapCount", 0);
     // 渲染水面

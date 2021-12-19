@@ -10,7 +10,7 @@ Zombie::Zombie(glm::vec3 pos) {
 }
 
 void Zombie::init() {
-	model = new Model("../../../world_model/player/player.obj");
+	model = new Model("../../../world_model/player/zb.obj");
 }
 
 /**
@@ -24,4 +24,8 @@ void Zombie::render(Shader* shader) {
 	shader->setMat4("model", mat);
 
 	model->Draw(*shader);
+}
+
+void Zombie::setPosition(glm::vec3 pos){
+	position = pos;
 }
