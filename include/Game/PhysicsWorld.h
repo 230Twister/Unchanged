@@ -30,7 +30,6 @@ public:
 	PhysicsWorld();
 	void addCharator(btVector3, int);
 	void addRigidBody(Model*);
-	void addDynamicRigidBody(btVector3,int);
 	void characterJump();
 	void characterWalk(WalkDirection, float);
 	void updateCharacterFront(float);
@@ -38,7 +37,7 @@ public:
 
 	void stepSimulation();
 	int attackTest(Player*);
-	bool attackedTest();
+	int attackedTest();
 	void pushback(int);
 
 	btTransform& getTransform(int);

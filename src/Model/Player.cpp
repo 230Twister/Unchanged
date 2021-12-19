@@ -6,6 +6,7 @@ Player::Player() {
 	model = new Model("../../../world_model/player/player.obj");
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	health = 100;
+	attackState = false;
 	view_mode = 1;
 	view_mode_trans_ena = 1;
 	yaw = 0.0f;

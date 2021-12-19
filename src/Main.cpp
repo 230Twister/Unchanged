@@ -12,6 +12,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
 const unsigned int SCR_WIDTH = 1200;
 const unsigned int SCR_HEIGHT = 800;
@@ -24,7 +25,7 @@ bool firstMouse = true;
 
 // 窗口大小
 const GLuint WIDTH = 1200, HEIGHT = 800;
-
+Game game;
 
 int main() {
 	// 初始化 GLFW
@@ -41,6 +42,7 @@ int main() {
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 
 	// tell GLFW to capture our mouse
@@ -63,7 +65,6 @@ int main() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	Game game;
 	game.init();
 	camera = game.getCamera();
 
@@ -113,6 +114,15 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 	lastY = ypos;
 
 	camera->ProcessMouseMovement(xoffset, yoffset);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+	if (action == GLFW_PRESS) {
+		if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			
+		}
+	}
+	return;
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called

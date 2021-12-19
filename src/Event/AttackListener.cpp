@@ -13,18 +13,24 @@ void AttackListener::handle() {
 	PhysicsWorld* physics = attackEvent->getPhysicsWorld();
 	World* world = attackEvent->getWorld();
 
-	if (attackType == 0) {
+	if (attackType < 0) {
 		// 玩家受到攻击
-		physics->pushback(0);
-
 		Player* player = world->getPlayer();
-		player->setHealth(player->getHealth() - 5);
+		Zombie* zombie = world->getZombie(-attackType - 1);
+
+		if (!zombie->isDead()) {
+			physics->pushback(0);
+			player->setHealth(player->getHealth() - 5);
+		}
+		
 	}
 	else {
 		// 僵尸受到攻击
-		physics->pushback(attackType);
-
 		Zombie* zombie = world->getZombie(attackType - 1);
-		zombie->setHealth(zombie->getHealth() - 5);
+
+		if (!zombie->isDead()) {
+			physics->pushback(attackType);
+			zombie->setHealth(zombie->getHealth() - 15);
+		}
 	}
 }

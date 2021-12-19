@@ -6,7 +6,8 @@ Model* Zombie::model = NULL;
 
 Zombie::Zombie(glm::vec3 pos) {
 	position = pos;
-	health = 20;
+	health = 50;
+	dead = false;
 }
 
 void Zombie::init() {
@@ -34,7 +35,7 @@ void Zombie::setHealth(int health) {
 	this->health = health;
 
 	if (health <= 0) {
-
+		dead = true;
 	}
 }
 
@@ -45,6 +46,9 @@ void Zombie::setHealth(int health) {
 int Zombie::getHealth() {
 	return health;
 }
+
+bool Zombie::isDead() {
+	return dead;
 }
 
 void Zombie::setPosition(glm::vec3 pos){
