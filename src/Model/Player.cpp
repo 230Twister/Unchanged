@@ -1,5 +1,6 @@
 #include "Model/Player.h"
 #include "Game/PhysicsWorld.h"
+#include "GLFW/glfw3.h"
 
 Player::Player() {
 	camera = new Camera(glm::vec3(0.0f, 50.0f, 0.0f));
@@ -28,9 +29,11 @@ void Player::render(Shader* shader) {
 
 	model->Draw(*shader);
 
+	// äÖÈ¾ÎäÆ÷
 	knife->SetPosition(position + glm::vec3(0.35f * glm::cos(glm::radians(25-yaw)), 0.35f, 0.35f * glm::sin(glm::radians(25-yaw))));
 	knife->SetYaw(yaw);
-	knife->Render(shader);
+	float now_time = glfwGetTime();
+	knife->Render(shader, attackTime - now_time < 0 ? 0 : attackTime - now_time);
 }
 
 /**
