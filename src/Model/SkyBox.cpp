@@ -49,6 +49,33 @@ float SkyBox::skyboxVertices[108] = {
 
 SkyBox::SkyBox() {
 	skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
+	faces[0][0] = "../../../skybox/morning_right.jpg";
+	faces[0][1] = "../../../skybox/morning_left.jpg";
+	faces[0][2] = "../../../skybox/morning_top.jpg";
+	faces[0][3] = "../../../skybox/bottom.jpg";
+	faces[0][4] = "../../../skybox/morning_back.jpg";
+	faces[0][5] = "../../../skybox/morning_front.jpg";
+
+	faces[1][0] = "../../../skybox/midday_right.jpg";
+	faces[1][1] = "../../../skybox/midday_left.jpg";
+	faces[1][2] = "../../../skybox/midday_top.jpg";
+	faces[1][3] = "../../../skybox/bottom.jpg";
+	faces[1][4] = "../../../skybox/midday_back.jpg";
+	faces[1][5] = "../../../skybox/midday_front.jpg";
+
+	faces[2][0] = "../../../skybox/dusk_right.jpg";
+	faces[2][1] = "../../../skybox/dusk_left.jpg";
+	faces[2][2] = "../../../skybox/dusk_top.jpg";
+	faces[2][3] = "../../../skybox/bottom.jpg";
+	faces[2][4] = "../../../skybox/dusk_back.jpg";
+	faces[2][5] = "../../../skybox/dusk_front.jpg";
+
+	faces[3][0] = "../../../skybox/night_right.jpg";
+	faces[3][1] = "../../../skybox/night_left.jpg";
+	faces[3][2] = "../../../skybox/night_top.jpg";
+	faces[3][3] = "../../../skybox/bottom.jpg";
+	faces[3][4] = "../../../skybox/night_back.jpg";
+	faces[3][5] = "../../../skybox/night_front.jpg";
 	loadSkybox();
 	loadCubemap();
 }
