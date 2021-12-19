@@ -48,7 +48,7 @@ private:
 
 	unsigned int depthMapPoint;										// 深度贴图
 	unsigned int depthMapFBOPoint;									// 深度帧缓冲
-	glm::vec3 lightPos = glm::vec3(41.5, 12.0, 27.0);				// 点光源位置
+	glm::vec3 lightPos = glm::vec3(41.5, 20.0, 27.0);				// 点光源位置
 	
 	// 点阴影部分结束
 	Camera* camera;	// 摄像机
