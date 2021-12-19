@@ -184,9 +184,9 @@ void PhysicsWorld::pushback(int index) {
     btTransform& transform = m_ghostObject[index]->getWorldTransform();
     btVector3 forwardDir = transform.getBasis()[2];
     forwardDir = forwardDir.normalize();
-    forwardDir /= 2;
+    forwardDir *= 9;
 
-    charater->applyImpulse(btVector3(0.0, 0.01, 0.0));
+    charater->applyImpulse(-forwardDir);
     
 }
 
@@ -243,6 +243,10 @@ void PhysicsWorld::updateCharacterFront(float yaw) {
 */
 void PhysicsWorld::characterStop() {
     m_character[0]->setWalkDirection(btVector3(0.0, 0.0, 0.0));
+}
+
+void PhysicsWorld::respawn() {
+    m_ghostObject[0]->getWorldTransform().setOrigin(btVector3(0.0f, 50.0f, 0.0f));
 }
 
 PhysicsWorld::~PhysicsWorld() {

@@ -31,8 +31,9 @@ public:
 	void setYaw(float);
 	void transViewMode();
 	void transEna();
-	void setHealth(int);
+	bool setHealth(int);
 	int getHealth();
+	bool isDying() { return health <= 10; }
 	
 	void attack(float);
 	bool canAttack(float);

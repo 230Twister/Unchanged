@@ -148,6 +148,7 @@ void World::render() {
     modelShader->setMat4("projection", projection);
     modelShader->setMat4("spotSpaceMatrix", spotSpaceMatrix);
     modelShader->setVec3("viewPos", camera->Position);
+    modelShader->setBool("dying", player->isDying());
     
     if (isDay){
         modelShader->setVec3("direction_light.direction", sun->GetLightDirection());

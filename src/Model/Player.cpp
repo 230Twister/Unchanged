@@ -29,13 +29,16 @@ void Player::render(Shader* shader) {
 /**
  * @brief 设置玩家血量
  * @param health 血量
+ * @return 是否死亡
 */
-void Player::setHealth(int health) {
+bool Player::setHealth(int health) {
 	this->health = health;
 
 	if (health <= 0) {
-
+		this->health = 100;
+		return true;
 	}
+	return false;
 }
 
 /**

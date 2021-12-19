@@ -39,6 +39,7 @@ public:
 	int attackTest(Player*);
 	int attackedTest();
 	void pushback(int);
+	void respawn();
 
 	btTransform& getTransform(int);
 	~PhysicsWorld();

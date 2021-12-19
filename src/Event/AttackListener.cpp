@@ -20,7 +20,9 @@ void AttackListener::handle() {
 
 		if (!zombie->isDead()) {
 			physics->pushback(0);
-			player->setHealth(player->getHealth() - 5);
+			if (player->setHealth(player->getHealth() - 5)) {
+				physics->respawn();
+			}
 		}
 		
 	}
