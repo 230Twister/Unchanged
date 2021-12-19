@@ -188,4 +188,9 @@ void main()
     
     FragColor = vec4(result, 1.0f);
 
+    float dist = length(viewPos - FragPos);
+    vec4 FogColor = vec4(0.9f, 0.9f, 0.9f, 1.0f);
+    float FogFactor = 1 - exp(-0.002 * dist);
+    FragColor = mix(FragColor, FogColor, FogFactor);
+
 }

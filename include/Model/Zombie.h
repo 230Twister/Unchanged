@@ -11,10 +11,11 @@ private:
 	static Model* model;
 
 	glm::vec3 position;
+	float yaw;
 	int health;
 	bool dead;
 public:
-	Zombie(glm::vec3);
+	Zombie(glm::vec3, float);
 	void init();
 
 	void render(Shader*);

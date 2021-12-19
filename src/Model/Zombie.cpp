@@ -4,10 +4,11 @@
 
 Model* Zombie::model = NULL;
 
-Zombie::Zombie(glm::vec3 pos) {
+Zombie::Zombie(glm::vec3 pos, float y) {
 	position = pos;
 	health = 50;
 	dead = false;
+	yaw = y;
 }
 
 void Zombie::init() {
@@ -20,8 +21,16 @@ void Zombie::init() {
 */
 void Zombie::render(Shader* shader) {
 	glm::mat4 mat = glm::mat4(1.0f);
-	mat = glm::translate(mat, position);
-
+	if (dead) {
+		mat = glm::translate(mat, glm::vec3(position.x, position.y - 0.5f, position.z));
+	}
+	else {
+		mat = glm::translate(mat, position);
+	}
+	mat = glm::rotate(mat, glm::radians(yaw), glm::vec3(0, 1, 0));
+	if (dead) {
+		mat = glm::rotate(mat, glm::radians((float)90.0), glm::vec3(0, 0, 1));
+	}
 	shader->setMat4("model", mat);
 
 	model->Draw(*shader);

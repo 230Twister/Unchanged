@@ -19,10 +19,12 @@ void Game::init() {
 	world->setCamera(player->getCamera());
 
 	// 添加一个僵尸
-	Zombie* zombie = new Zombie(glm::vec3(10, 50, 0));
+	Zombie* zombie = new Zombie(glm::vec3(10, 50, 0), 0.0);
 	zombie->init();
 	world->addZombie(zombie);
 	physics->addCharator(btVector3(10, 50, 0), 1);
+
+	float zombieYaws[10]{270, 90, -10, 20, 180, -90, 40, 66 , 60, 70};
 
 	glm::vec3 zombiePosition[10]{
 		{15, 40, 30}, {10, 10, 10},
@@ -34,7 +36,7 @@ void Game::init() {
 
 	// 添加一堆僵尸
 	for (int i = 0; i < 10; i++) {
-		Zombie* zombie = new Zombie(zombiePosition[i]);
+		Zombie* zombie = new Zombie(zombiePosition[i], zombieYaws[i]);
 		world->addZombie(zombie);
 		physics->addCharator(btVector3(zombiePosition[i].x, zombiePosition[i].y, zombiePosition[i].z), 1);
 	}
@@ -112,13 +114,6 @@ void Game::loop() {
 		frame = currentFrame;
 		world->setTime(world->getTime() + 1);
 	}
-}
-
-void Game::spawnZombie() {
-	Zombie* zombie = new Zombie(glm::vec3(10, 50, 0));
-
-	world->addZombie(zombie);
-	physics->addCharator(btVector3(10, 50, 0), 1);
 }
 
 Game::~Game() {

@@ -200,8 +200,9 @@ void World::render() {
     glEnable(GL_CULL_FACE);
     renderObjects(modelShader);
     player->render(modelShader);
-    for (auto it = zombies.begin(); it != zombies.end(); it++) {
-        (*it)->render(modelShader);
+    for (auto z:zombies) {
+
+        z->render(modelShader);
     }
     glDisable(GL_CULL_FACE);
 
