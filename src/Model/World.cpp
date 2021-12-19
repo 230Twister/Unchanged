@@ -13,7 +13,7 @@ World::World(const char* world_obj) {
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
 
     //点阴影渲染
-    shadowMappingShaderPoint = new Shader("../../../ShadowMappingVertPoint.vs", "../../../ShadowMappingFragPoint.frag", "../../../ShadowMappingGPoint.gs");
+    shadowMappingShaderPoint = new Shader("../../../shader/ShadowMappingVertPoint.vs", "../../../shader/ShadowMappingFragPoint.frag", "../../../shader/ShadowMappingGPoint.gs");
 
 
     model = new Model(world_obj);
@@ -280,7 +280,7 @@ void World::render() {
 
     glActiveTexture(GL_TEXTURE0 + 4);
     modelShader->setInt("texture_shadowMap3", 4);
-    glBindTexture(GL_TEXTURE_2D, depthMapPoint);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthMapPoint);
 
     // 绘制场景
     glEnable(GL_CULL_FACE);

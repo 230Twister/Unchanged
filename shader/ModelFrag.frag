@@ -89,7 +89,7 @@ vec3 getPointLight() {
     vec3 specular = point_light.specular * (spec * model_specular);
 
     //º∆À„“ı”∞
-    vec3 lightColor = vec3(3.5);
+    vec3 lightColor = vec3(0.5);
     vec3 fragToLight = FragPos - point_light.position;
     float closestDepth = texture(texture_shadowMap3, fragToLight).r;
     closestDepth *= far_plane;
