@@ -48,6 +48,8 @@ uniform bool dying;
 uniform samplerCube texture_shadowMap3;
 uniform float far_plane;
 
+uniform samplerCube skybox;
+
 float CSMshadow() {
     int index = 3;
     if (gl_FragCoord.z < farBounds.x) {
@@ -199,8 +201,10 @@ void main()
 
     FragColor = vec4(result, 1.0f);
 
+    // ±¡Îí
     float dist = length(viewPos - FragPos);
-    vec4 FogColor = vec4(0.9f, 0.9f, 0.9f, 1.0f);
+    vec3 eyeVec = normalize(viewPos - FragPos);
+    vec4 FogColor = vec4(direction_light.diffuse, 1.0f);
     float FogFactor = 1 - exp(-0.002 * dist);
     FragColor = mix(FragColor, FogColor, FogFactor);
 

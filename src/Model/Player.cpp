@@ -9,6 +9,8 @@ Player::Player() {
 	attackState = true;
 	view_mode = 1;
 	view_mode_trans_ena = 1;
+	flash_mode = 0;
+	flash_mode_trans_ena = 1;
 	yaw = 0.0f;
 }
 
@@ -89,8 +91,17 @@ void Player::transViewMode() {
 	view_mode_trans_ena = 0;
 }
 
+void Player::transFlashMode() {
+	if (flash_mode_trans_ena) flash_mode = 1 - flash_mode;
+	flash_mode_trans_ena = 0;
+}
+
 void Player::transEna() {
 	view_mode_trans_ena = 1;
+}
+
+void Player::transFlashEna() {
+	flash_mode_trans_ena = 1;
 }
 
 void Player::setPosition(glm::vec3 pos) {
