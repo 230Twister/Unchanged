@@ -197,7 +197,8 @@ void main()
     // »·¾³¹â
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    vec3 result = ambient + getDirectionLight() + getSpotLight() + getPointLight();
+    // vec3 result = ambient + getDirectionLight() + getSpotLight() + getPointLight();
+    vec3 result = ambient + getPointLight();
 
     FragColor = vec4(result, 1.0f);
 

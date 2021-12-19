@@ -23,7 +23,7 @@ void Player::render(Shader* shader) {
 	glm::mat4 mat = glm::mat4(1.0f);
 	mat = glm::translate(mat, position);
 	mat = glm::rotate(mat, glm::radians(yaw), glm::vec3(0, 1, 0));
-
+	/*cout << position.x << " " << position.y << " " << position.z << endl;*/
 	shader->setMat4("model", mat);
 
 	model->Draw(*shader);
