@@ -24,7 +24,7 @@ void PhysicsWorld::addCharator(btVector3 orgin, int index) {
     ghostObject->setUserIndex(index);
 
     // 建立碰撞形状
-    btConvexShape* modelShape = new btCapsuleShape(0.5f, 0.2f);
+    btConvexShape* modelShape = new btCapsuleShape(0.5f, 0.1f);
     collisionShapes.push_back(modelShape);
 
     // 建立变换矩阵
