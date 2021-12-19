@@ -17,6 +17,10 @@ public:
 	void init();
 
 	void render(Shader*);
+
+	void setHealth(int);
+	int getHealth();
+	void setPosition(glm::vec3);
 };
 
 #endif // !ZOMBIE_H

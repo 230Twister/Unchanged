@@ -15,6 +15,24 @@ public:
 	virtual void call() = 0;
 };
 
+// 攻击
+class AttackEvent : public Event{
+private:
+	static HandleList handleList;
+
+	World* world;
+	PhysicsWorld* physicsWorld;
+	int attackType;	// 0 僵尸打玩家 1...n玩家打第n个僵尸
+public:
+	AttackEvent(World*, PhysicsWorld*, int);
+	World* getWorld();
+	PhysicsWorld* getPhysicsWorld();
+	int getAttackType();
+
+	void addListener(Listener*);
+	void call();
+};
+
 // 物理模拟事件类
 class PhysicsEvent : public Event {
 private:

@@ -27,6 +27,8 @@ public:
 	void setYaw(float);
 	void transViewMode();
 	void transEna();
+	void setHealth(int);
+	int getHealth();
 
 	glm::vec3 getPosition();
 	Camera* getCamera();
