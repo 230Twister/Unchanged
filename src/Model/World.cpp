@@ -12,6 +12,7 @@ World::World(const char* world_obj) {
     time = 0;
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
+    cascadedShadowShader = new Shader("../../../shader/CascadedShadowVert.vs", "../../../shader/ShadowMappingFrag.frag", "../../../shader/CascadedShadowGeo.gs");
 
     model = new Model(world_obj);
     skybox = new SkyBox();
@@ -85,22 +86,22 @@ void World::renderDepthMap() {
     // 计算光空间转换矩阵
     calculateLightSpaceMatrix();
 
+    /*****************渲染平行光的深度贴图*********************/
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
     // 设置着色器
-    shadowMappingShader->use();
+    cascadedShadowShader->use();
 
-    for (int i = 0; i < CSM_MAX_SPLITS; i++) {
-        shadowMap->transmit(shadowMappingShader, i);
-        renderObjects(shadowMappingShader);
-        player->render(shadowMappingShader);
-    }
+    shadowMap->transmit(cascadedShadowShader);
+    renderObjects(cascadedShadowShader);
+    player->render(cascadedShadowShader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glCullFace(GL_BACK);
     glDisable(GL_CULL_FACE);
 
+    /*****************渲染聚光的深度贴图*********************/
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
 
@@ -174,7 +175,6 @@ void World::render() {
         modelShader->setVec3("direction_light.specular", glm::vec3(0.3f, 0.3f, 0.3f));
     }
 
-    // modelShader->setVec3("spot_light.position", camera->Position);
     modelShader->setVec3("spot_light.position", player->getPosition());
     modelShader->setVec3("spot_light.direction", camera->Front);
     modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
@@ -188,8 +188,8 @@ void World::render() {
 
     shadowMap->transmitRenderData(modelShader);
 
-    glActiveTexture(GL_TEXTURE0 + 6);
-    modelShader->setInt("texture_shadowMap2", 6);
+    glActiveTexture(GL_TEXTURE0 + 3);
+    modelShader->setInt("texture_spotShadowMap", 3);
     glBindTexture(GL_TEXTURE_2D, spotDepthMap);
 
     // 绘制场景
@@ -198,8 +198,6 @@ void World::render() {
     player->render(modelShader);
     glDisable(GL_CULL_FACE);
 
-    // 根据时间更新天空盒贴图
-    skybox->renewSkybox(time);
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
     skybox->skyboxShader->use();
@@ -208,7 +206,7 @@ void World::render() {
     skybox->skyboxShader->setMat4("view", view);
     skybox->skyboxShader->setMat4("projection", projection);
     // 渲染天空盒
-    skybox->renderSkybox();
+    skybox->renderSkybox(time);
 
     // 白天太阳，晚上月亮
     if (isDay){
@@ -326,6 +324,7 @@ Model* World::getBaseModel() {
 }
 
 World::~World() {
+    delete cascadedShadowShader;
     delete shadowMappingShader;
     delete modelShader;
     delete shadowMap;

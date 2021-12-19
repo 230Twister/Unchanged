@@ -35,6 +35,7 @@ private:
 
 	Shader* modelShader;				// 模型渲染着色器
 	Shader* shadowMappingShader;		// 深度贴图着色器
+	Shader* cascadedShadowShader;		// 级联阴影着色器
 	ShadowMap* shadowMap;
 
 	Camera* camera;						// 摄像机

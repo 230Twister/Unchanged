@@ -24,33 +24,33 @@ ShadowMap::ShadowMap() {
 
 	// 创建帧缓冲
 	glGenFramebuffers(1, &shadowFBO);
+
+	// 创建多层深度贴图
+	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+	glGenTextures(1, &depthMaps);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
+	glTexImage3D(GL_TEXTURE_2D_ARRAY, 
+				0, 
+				GL_DEPTH_COMPONENT32F, 
+				SHADOW_WIDTH, 
+				SHADOW_HEIGHT, 
+				CSM_MAX_SPLITS, 
+				0, 
+				GL_DEPTH_COMPONENT, 
+				GL_FLOAT, 
+				NULL);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, borderColor);
+	
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMaps, 0);
 	glDrawBuffer(GL_NONE);
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-	for (int i = 0; i < CSM_MAX_SPLITS; i++) {
-		glGenTextures(1, &depthMap[i]);
-		glBindTexture(GL_TEXTURE_2D, depthMap[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-		glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-	}
-	glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-/**
- * @brief 绑定深度贴图到帧缓冲上
- * @param index 第几张深度贴图
-*/
-void ShadowMap::bindTexture(int index) {
-	glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap[index], 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
 void ShadowMap::setup(Camera* camera, glm::vec3& lightDir) {
@@ -61,13 +61,11 @@ void ShadowMap::setup(Camera* camera, glm::vec3& lightDir) {
 /**
  * @brief 传输渲染深度贴图需要的信息
  * @param shader 着色器
- * @param index 深度贴图索引
 */
-void ShadowMap::transmit(Shader* shader, int index) {
-	// 绑定深度贴图
-	bindTexture(index);
-
-	shader->setMat4("lightSpaceMatrix", lightSpaceMatrix[index]);
+void ShadowMap::transmit(Shader* shader) {
+	for (int i = 0; i < CSM_MAX_SPLITS; i++) {
+		shader->setMat4("lightSpaceMatrix[" + std::to_string(i) + "]", lightSpaceMatrix[i]);
+	}
 	shader->setMat4("model", glm::mat4(1.0f));
 
 	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -85,12 +83,11 @@ void ShadowMap::transmitRenderData(Shader* shader) {
 	for (int i = 0; i < CSM_MAX_SPLITS; i++) {
 		std::string str = "directSpaceMatrix[" + std::to_string(i) + "]";
 		shader->setMat4(str.c_str(), lightSpaceMatrix[i]);
-		
-		glActiveTexture(GL_TEXTURE0 + 2 + i);
-		str = "texture_shadowMap[" + std::to_string(i) + "]";
-		shader->setInt(str, 2 + i);
-		glBindTexture(GL_TEXTURE_2D, depthMap[i]);
 	}
+
+	glActiveTexture(GL_TEXTURE0 + 2);
+	shader->setInt("texture_cascadeMap", 2);
+	glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
 }
 
 /**
