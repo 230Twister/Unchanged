@@ -25,3 +25,23 @@ void Zombie::render(Shader* shader) {
 
 	model->Draw(*shader);
 }
+
+/**
+ * @brief 设置僵尸血量
+ * @param health 血量
+*/
+void Zombie::setHealth(int health) {
+	this->health = health;
+
+	if (health <= 0) {
+
+	}
+}
+
+/**
+ * @brief 获取僵尸血量
+ * @return 血量
+*/
+int Zombie::getHealth() {
+	return health;
+}

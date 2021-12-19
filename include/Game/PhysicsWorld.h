@@ -6,6 +6,7 @@
 
 class btPairCachingGhostObject;
 class btKinematicCharacterController;
+class Player;
 
 enum class WalkDirection {
 	RIGHT, LEFT, UP, DOWN
@@ -35,6 +36,9 @@ public:
 	void characterStop();
 
 	void stepSimulation();
+	int attackTest(Player*);
+	bool attackedTest();
+	void pushback(int);
 
 	btTransform& getTransform(int);
 	~PhysicsWorld();

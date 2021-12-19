@@ -17,6 +17,9 @@ public:
 	void init();
 
 	void render(Shader*);
+
+	void setHealth(int);
+	int getHealth();
 };
 
 #endif // !ZOMBIE_H

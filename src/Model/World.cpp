@@ -261,8 +261,7 @@ void World::renderObjects(Shader* shader) {
  * @brief 渲染太阳
  * @param shader 渲染使用的着色器
 */
-void World::renderSun()
-{
+void World::renderSun() {
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi;
     sun->Render(angle);
@@ -272,8 +271,7 @@ void World::renderSun()
  * @brief 渲染月亮
  * @param shader 渲染使用的着色器
 */
-void World::renderMoon()
-{
+void World::renderMoon() {
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi - _pi;
     moon->Render(angle);

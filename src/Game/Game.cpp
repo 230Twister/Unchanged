@@ -21,6 +21,7 @@ void Game::init() {
 	// 注册监听器
 	listenerManager.registerListener(new KeyBoardListener(), &KeyBoardEvent(NULL, NULL, 0, 0, 0.0f));
 	listenerManager.registerListener(new PhysicsListener(), &PhysicsEvent(NULL, NULL));
+	listenerManager.registerListener(new AttackListener(), &AttackEvent(NULL, NULL, 0));
 }
 
 /**
@@ -69,6 +70,16 @@ void Game::loop() {
 	// 物理世界模拟
 	physics->stepSimulation();
 	PhysicsEvent(world, physics).call();
+
+	// 玩家攻击与被攻击检测
+	int attackZombie = physics->attackTest(player);
+	if (attackZombie) {
+		AttackEvent(world, physics, attackZombie).call();
+	}
+	bool beAttacked = physics->attackedTest();
+	if (beAttacked) {
+		AttackEvent(world, physics, 0).call();
+	}
 
 	// 模型世界渲染
 	world->renderDepthMap();

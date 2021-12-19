@@ -4,11 +4,21 @@
 class Event;
 class KeyBoardEvent;
 class PhysicsEvent;
+class AttackEvent;
 
 class Listener {
 public:
 	virtual void setEvent(Event*) = 0;
 	virtual void handle() = 0;
+};
+
+// 攻击监听类
+class AttackListener : public Listener {
+private:
+	AttackEvent* attackEvent;
+public:
+	void setEvent(Event*);
+	void handle();
 };
 
 // 物理模拟监听类

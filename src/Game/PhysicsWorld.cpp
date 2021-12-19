@@ -1,4 +1,6 @@
 #include "Game/PhysicsWorld.h"
+#include "Game/ContactCallBack.h"
+#include "Model/Player.h"
 #include <BulletDynamics\Character\btKinematicCharacterController.h>
 #include <BulletCollision\CollisionDispatch\btGhostObject.h>
 
@@ -12,12 +14,17 @@ PhysicsWorld::PhysicsWorld() {
 	dynamicsWorld->setGravity(btVector3(0, -10, 0));        // 设置重力加速度 Y向下
 }
 
+/**
+ * @brief 添加角色（包括玩家、僵尸）
+ * @param orgin 初始位置
+ * @param index 标号 0表示玩家 1以上则为僵尸
+*/
 void PhysicsWorld::addCharator(btVector3 orgin, int index) {
     btPairCachingGhostObject* ghostObject = new btPairCachingGhostObject();
     ghostObject->setUserIndex(index);
 
     // 建立碰撞形状
-    btConvexShape* modelShape = new btCapsuleShape(0.5f, 0.5f);
+    btConvexShape* modelShape = new btCapsuleShape(0.5f, 0.4f);
     collisionShapes.push_back(modelShape);
 
     // 建立变换矩阵
@@ -43,6 +50,10 @@ void PhysicsWorld::addCharator(btVector3 orgin, int index) {
     m_ghostObject.push_back(ghostObject);
 }
 
+/**
+ * @brief 添加静止不动的刚体
+ * @param model 刚体的模型
+*/
 void PhysicsWorld::addRigidBody(Model* model) {
     btTriangleIndexVertexArray* meshInterface = new btTriangleIndexVertexArray();
     const vector<Mesh>& meshes = model->getMesh();
@@ -90,6 +101,7 @@ void PhysicsWorld::addRigidBody(Model* model) {
     // 刚体构造信息
     btRigidBody::btRigidBodyConstructionInfo  rbInfo(mass, myMotionState, modelShape, localInertia);
     btRigidBody* body = new btRigidBody(rbInfo);
+    body->setUserIndex(0);
 
     // 将刚体添加至动态世界中
     dynamicsWorld->addRigidBody(body);
@@ -118,6 +130,55 @@ btTransform& PhysicsWorld::getTransform(int index) {
 */
 void PhysicsWorld::stepSimulation() {
     dynamicsWorld->stepSimulation(1.f / 150.f, 10);
+}
+
+/**
+ * @brief 玩家攻击的射线检测
+*/
+int PhysicsWorld::attackTest(Player* player) {
+    glm::vec3 src = player->getPosition() + glm::vec3(0.0f, 0.5f, 0.0f);
+    glm::vec3 dir = player->getCamera()->Front;
+    btVector3 from(src.x, src.y, src.z);
+    dir *= 1.1;
+    src +=  dir;
+    btVector3 to(src.x, src.y, src.z);
+    btCollisionWorld::ClosestRayResultCallback callback(from, to);
+
+    dynamicsWorld->rayTest(from, to, callback);
+    if (callback.hasHit()) {
+        const btCollisionObject* obj = callback.m_collisionObject;
+        int index = obj->getUserIndex();
+
+        if (index) {
+            return index;
+        }
+    }
+    return 0;
+}
+
+/**
+ * @brief 玩家被攻击的检测
+ * @return 是否被攻击
+*/
+bool PhysicsWorld::attackedTest() {
+    ContactCallBack callback = ContactCallBack();
+    btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[1];
+    dynamicsWorld->contactTest(obj, callback);
+
+    return callback.attacked;
+}
+
+/**
+ * @brief 击退某个角色
+ * @param index 
+*/
+void PhysicsWorld::pushback(int index) {
+    btKinematicCharacterController* charater = m_character[index];
+    btTransform& transform = m_ghostObject[index]->getWorldTransform();
+    btVector3 forwardDir = transform.getBasis()[2];
+    forwardDir = forwardDir.normalize();
+
+    charater->applyImpulse(-forwardDir);
 }
 
 /**
@@ -168,6 +229,9 @@ void PhysicsWorld::updateCharacterFront(float yaw) {
     m_ghostObject[0]->getWorldTransform().getBasis().setRotation(btQuaternion(btVector3(0, 1, 0), glm::radians(yaw)));
 }
 
+/**
+ * @brief 角色停止走路
+*/
 void PhysicsWorld::characterStop() {
     m_character[0]->setWalkDirection(btVector3(0.0, 0.0, 0.0));
 }
