@@ -18,6 +18,27 @@ void Game::init() {
 	world->addPlayer(player);
 	world->setCamera(player->getCamera());
 
+	// Ìí¼ÓÒ»¸ö½©Ê¬
+	Zombie* zombie = new Zombie(glm::vec3(10, 50, 0));
+	zombie->init();
+	world->addZombie(zombie);
+	physics->addCharator(btVector3(10, 50, 0), 1);
+
+	glm::vec3 zombiePosition[10]{
+		{15, 50, 30}, {10, 50, 10},
+		{22, 50, 20}, {10, 50, 15},
+		{10, 50, 25}, {19, 50, 35},
+		{10, 50, -10}, {30, 50, -12},
+		{10, 50, -20}, {20, 50, 0}
+	};
+
+	// Ìí¼ÓÒ»¶Ñ½©Ê¬
+	for (int i = 0; i < 10; i++) {
+		Zombie* zombie = new Zombie(zombiePosition[i]);
+		world->addZombie(zombie);
+		physics->addCharator(btVector3(zombiePosition[i].x, zombiePosition[i].y, zombiePosition[i].z), 1);
+	}
+
 	// ×¢²á¼àÌýÆ÷
 	listenerManager.registerListener(new KeyBoardListener(), &KeyBoardEvent(NULL, NULL, 0, 0, 0.0f));
 	listenerManager.registerListener(new PhysicsListener(), &PhysicsEvent(NULL, NULL));

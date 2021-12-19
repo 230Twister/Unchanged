@@ -20,6 +20,7 @@ public:
 
 	void setHealth(int);
 	int getHealth();
+	void setPosition(glm::vec3);
 };
 
 #endif // !ZOMBIE_H

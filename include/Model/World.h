@@ -69,6 +69,9 @@ public:
 	Zombie* getZombie(int index) {
 		return zombies[index];
 	}
+	vector<Zombie*> getZombies() {
+		return zombies;
+	}
 
 	void setCamera(Camera*);
 	void setTime(unsigned int);		// ÉèÖÃÊ±¼ä

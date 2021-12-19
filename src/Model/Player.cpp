@@ -8,6 +8,7 @@ Player::Player() {
 	health = 100;
 	view_mode = 1;
 	view_mode_trans_ena = 1;
+	yaw = 0.0f;
 }
 
 /**

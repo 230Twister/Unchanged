@@ -27,4 +27,12 @@ void PhysicsListener::handle() {
 	else {
 		camera->Position = glm::vec3(pos.getX(), pos.getY() + 0.45f , pos.getZ());
 	}
+
+	// Õ¨≤ΩΩ© ¨Œª÷√
+	for (int i = 0; i < world->getZombies().size(); i++) {
+		btTransform& transform = physics->getTransform(2 + i);
+		btVector3& pos = transform.getOrigin();
+		position = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
+		world->getZombies()[i]->setPosition(position);
+	}
 }
