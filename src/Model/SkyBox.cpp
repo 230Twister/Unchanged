@@ -49,6 +49,34 @@ float SkyBox::skyboxVertices[108] = {
 
 SkyBox::SkyBox() {
 	skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
+	faces[0][0] = "../../../skybox_img/morning_right.jpg";
+	faces[0][1] = "../../../skybox_img/morning_left.jpg";
+	faces[0][2] = "../../../skybox_img/morning_top.jpg";
+	faces[0][3] = "../../../skybox_img/bottom.jpg";
+	faces[0][4] = "../../../skybox_img/morning_back.jpg";
+	faces[0][5] = "../../../skybox_img/morning_front.jpg";
+
+	faces[1][0] = "../../../skybox_img/midday_right.jpg";
+	faces[1][1] = "../../../skybox_img/midday_left.jpg";
+	faces[1][2] = "../../../skybox_img/midday_top.jpg";
+	faces[1][3] = "../../../skybox_img/bottom.jpg";
+	faces[1][4] = "../../../skybox_img/midday_back.jpg";
+	faces[1][5] = "../../../skybox_img/midday_front.jpg";
+
+	faces[2][0] = "../../../skybox_img/dusk_right.jpg";
+	faces[2][1] = "../../../skybox_img/dusk_left.jpg";
+	faces[2][2] = "../../../skybox_img/dusk_top.jpg";
+	faces[2][3] = "../../../skybox_img/bottom.jpg";
+	faces[2][4] = "../../../skybox_img/dusk_back.jpg";
+	faces[2][5] = "../../../skybox_img/dusk_front.jpg";
+
+	faces[3][0] = "../../../skybox_img/night_right.jpg";
+	faces[3][1] = "../../../skybox_img/night_left.jpg";
+	faces[3][2] = "../../../skybox_img/night_top.jpg";
+	faces[3][3] = "../../../skybox_img/bottom.jpg";
+	faces[3][4] = "../../../skybox_img/night_back.jpg";
+	faces[3][5] = "../../../skybox_img/night_front.jpg";
+
 	loadSkybox();
 	loadCubemap();
 }
@@ -86,8 +114,8 @@ void SkyBox::loadCubemap() {
 		for (unsigned int j = 0; j < 6; j++) {
 			unsigned char* data = stbi_load(faces[i][j].c_str(), &width, &height, &nrChannels, 0);
 			if (data) {
-				std::cout << "Read img sucess: " << faces[i][j] << std::endl;
-				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				std::cout << "Read img success: " << faces[i][j] << std::endl;
+				glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + j,
 					0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
 				);
 				stbi_image_free(data);
@@ -122,7 +150,6 @@ void SkyBox::renderSkybox(unsigned int time) {
 	else {
 		index = 3;
 	}
-
 	glBindVertexArray(skyboxVAO);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture[index]);
