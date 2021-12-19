@@ -55,7 +55,7 @@ void Game::processInput(GLFWwindow* window) {
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_G) ==  GLFW_PRESS) {
-		KeyBoardEvent(world, physics, GLFW_KEY_G,1, deltaTime).call();
+		KeyBoardEvent(world, physics, GLFW_KEY_G, 1, deltaTime).call();
 	}
 	else if(glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE) {
 		KeyBoardEvent(world, physics, GLFW_KEY_G, 0, deltaTime).call();

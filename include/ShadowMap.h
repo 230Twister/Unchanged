@@ -25,7 +25,7 @@ private:
 	float fov = 45.2f;		// 视锥角度
 
 	unsigned int shadowFBO;						// 帧缓冲
-	unsigned int depthMap[CSM_MAX_SPLITS];		// 几个分块的深度贴图
+	unsigned int depthMaps;						// 几个分块的多层深度贴图
 
 	glm::vec3 frustumCenter;
 	Frustum frustums[CSM_MAX_SPLITS];			// 几个分块的视锥体
@@ -34,9 +34,8 @@ private:
 public:
 	ShadowMap();
 
-	void bindTexture(int);
 	void setup(Camera*, glm::vec3&);
-	void transmit(Shader*, int);
+	void transmit(Shader*);
 	void transmitRenderData(Shader*);
 	void splitFrunstum(Camera*);
 	void generateLightSpaceMatrix(glm::vec3&);
