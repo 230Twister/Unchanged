@@ -119,7 +119,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 	if (action == GLFW_PRESS) {
 		if (button == GLFW_MOUSE_BUTTON_LEFT) {
-			
+			game.playerAttack();
 		}
 	}
 	return;

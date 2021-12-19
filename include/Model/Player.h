@@ -15,9 +15,12 @@ private:
 	glm::vec3 position;	// 玩家所在坐标
 	float yaw;
 	int health;			// 血量
-	bool attackState;
+	
 	int view_mode;
 	int view_mode_trans_ena;
+
+	float attackTime;
+	bool attackState;
 
 public:
 	Player();
@@ -30,6 +33,10 @@ public:
 	void transEna();
 	void setHealth(int);
 	int getHealth();
+	
+	void attack(float);
+	bool canAttack(float);
+	void disableAttack();
 
 	glm::vec3 getPosition();
 	Camera* getCamera();

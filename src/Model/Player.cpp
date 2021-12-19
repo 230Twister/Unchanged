@@ -6,7 +6,7 @@ Player::Player() {
 	model = new Model("../../../world_model/player/player.obj");
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	health = 100;
-	attackState = false;
+	attackState = true;
 	view_mode = 1;
 	view_mode_trans_ena = 1;
 	yaw = 0.0f;
@@ -44,6 +44,37 @@ void Player::setHealth(int health) {
 */
 int Player::getHealth() {
 	return health;
+}
+
+/**
+ * @brief 玩家开始攻击
+ * @param time 当前glfw时间
+*/
+void Player::attack(float time) {
+	if (attackTime <= time) {
+		// 攻击硬直解除
+		attackTime = time + 2.0f;
+		attackState = true;
+	}
+}
+
+/**
+ * @brief 在攻击时间内攻击一次后就屏蔽后续攻击
+*/
+void Player::disableAttack() {
+	attackState = false;
+}
+
+/**
+ * @brief 判断当前玩家能否造成攻击
+ * @return 能否造成攻击
+*/
+bool Player::canAttack(float time) {
+	if (!attackState)
+		return false;
+	if (attackTime < time)
+		return false;
+	return true;
 }
 
 glm::vec3 Player::getPosition() {
