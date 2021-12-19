@@ -166,7 +166,7 @@ int PhysicsWorld::attackedTest() {
     btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[1];
     dynamicsWorld->contactTest(obj, callback);
 
-    return callback.attacked;
+    return callback.u_attacked;
 }
 
 /**
@@ -184,8 +184,9 @@ void PhysicsWorld::pushback(int index) {
     btTransform& transform = m_ghostObject[index]->getWorldTransform();
     btVector3 forwardDir = transform.getBasis()[2];
     forwardDir = forwardDir.normalize();
-    forwardDir *= 9;
+    forwardDir *= 8;
 
+    characterStop();
     charater->applyImpulse(-forwardDir);
     
 }
@@ -246,6 +247,7 @@ void PhysicsWorld::characterStop() {
 }
 
 void PhysicsWorld::respawn() {
+    characterStop();
     m_ghostObject[0]->getWorldTransform().setOrigin(btVector3(0.0f, 50.0f, 0.0f));
 }
 

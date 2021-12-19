@@ -38,7 +38,6 @@ public:
 	void transEna();
 	void transFlashMode();
 	void transFlashEna();
-	void setHealth(int);
 	bool setHealth(int);
 	int getHealth();
 	bool isDying() { return health <= 10; }

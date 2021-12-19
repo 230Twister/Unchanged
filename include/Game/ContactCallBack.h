@@ -4,7 +4,7 @@
 #include "btBulletCollisionCommon.h"
 
 struct ContactCallBack : btCollisionWorld::ContactResultCallback {
-    int attacked = 0;
+    int u_attacked = 0;
 
     btScalar addSingleResult(
         btManifoldPoint& cp,
@@ -15,10 +15,14 @@ struct ContactCallBack : btCollisionWorld::ContactResultCallback {
         int partId1,
         int index1) {
         
-        int des = colObj1Wrap->getCollisionObject()->getUserIndex();
-        attacked = 0;
-        if (des >= 1) {
-            attacked = des;
+        int des0 = colObj0Wrap->getCollisionObject()->getUserIndex();
+        int des1 = colObj1Wrap->getCollisionObject()->getUserIndex();
+        u_attacked = 0;
+        if (des1 >= 1) {
+            u_attacked = des1;
+        }
+        else if (des0 >= 1) {
+            u_attacked = des0;
         }
 
         return btScalar(0.f);
