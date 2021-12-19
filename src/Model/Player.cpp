@@ -4,6 +4,7 @@
 Player::Player() {
 	camera = new Camera(glm::vec3(0.0f, 50.0f, 0.0f));
 	model = new Model("../../../world_model/player/player.obj");
+	knife = new Weapon;
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	health = 100;
 	attackState = true;
@@ -26,6 +27,10 @@ void Player::render(Shader* shader) {
 	shader->setMat4("model", mat);
 
 	model->Draw(*shader);
+
+	knife->SetPosition(position + glm::vec3(0.35f * glm::cos(glm::radians(25-yaw)), 0.35f, 0.35f * glm::sin(glm::radians(25-yaw))));
+	knife->SetYaw(yaw);
+	knife->Render(shader);
 }
 
 /**
@@ -119,4 +124,5 @@ Camera* Player::getCamera() {
 Player::~Player() {
 	delete camera;
 	delete model;
+	delete knife;
 }

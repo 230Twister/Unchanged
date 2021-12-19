@@ -3,6 +3,7 @@
 
 #include "Model.h"
 #include "Camera.h"
+#include "Weapon.h"
 #include "glm/glm.hpp"
 
 class PhysicsWorld;
@@ -11,6 +12,7 @@ class Player {
 private:
 	Model* model;
 	Camera* camera;
+	Weapon* knife;
 
 	glm::vec3 position;	// 玩家所在坐标
 	float yaw;
