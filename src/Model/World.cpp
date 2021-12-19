@@ -179,7 +179,7 @@ void World::renderDepthMap() {
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOPoint);
     glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShaderPoint);
-    player->render(shadowMappingShader);
+    player->render(shadowMappingShaderPoint);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glCullFace(GL_BACK);
     glDisable(GL_CULL_FACE);
