@@ -45,7 +45,6 @@ void Zombie::setHealth(int health) {
 int Zombie::getHealth() {
 	return health;
 }
-}
 
 void Zombie::setPosition(glm::vec3 pos){
 	position = pos;

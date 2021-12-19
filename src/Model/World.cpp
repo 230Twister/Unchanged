@@ -97,6 +97,9 @@ void World::renderDepthMap() {
     shadowMap->transmit(cascadedShadowShader);
     renderObjects(cascadedShadowShader);
     player->render(cascadedShadowShader);
+    for (auto z : zombies) {
+        z->render(cascadedShadowShader);
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glCullFace(GL_BACK);
