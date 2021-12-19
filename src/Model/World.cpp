@@ -120,6 +120,9 @@ void World::renderDepthMap() {
     glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShader);
     player->render(shadowMappingShader);
+    for (auto z : zombies) {
+        z->render(shadowMappingShader);
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glCullFace(GL_BACK);
@@ -174,16 +177,22 @@ void World::render() {
     }
     else{
         modelShader->setVec3("direction_light.direction", moon->GetLightDirection());
-        modelShader->setVec3("direction_light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-        modelShader->setVec3("direction_light.diffuse", glm::vec3(0.6f, 0.6f, 0.6f));
-        modelShader->setVec3("direction_light.specular", glm::vec3(0.3f, 0.3f, 0.3f));
+        modelShader->setVec3("direction_light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+        modelShader->setVec3("direction_light.diffuse", glm::vec3(0.2f, 0.2f, 0.2f));
+        modelShader->setVec3("direction_light.specular", glm::vec3(0.1f, 0.1f, 0.1f));
     }
 
     modelShader->setVec3("spot_light.position", player->getPosition());
     modelShader->setVec3("spot_light.direction", camera->Front);
     modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
-    modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
-    modelShader->setVec3("spot_light.specular", 1.0f, 1.0f, 1.0f);
+    if (player->getFlashMode()) {
+        modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
+        modelShader->setVec3("spot_light.specular", 1.0f, 1.0f, 1.0f);
+    }
+    else {
+        modelShader->setVec3("spot_light.diffuse", 0.0f, 0.0f, 0.0f);
+        modelShader->setVec3("spot_light.specular", 0.0f, 0.0f, 0.0f);
+    }
     modelShader->setFloat("spot_light.constant", 1.0f);
     modelShader->setFloat("spot_light.linear", 0.027);
     modelShader->setFloat("spot_light.quadratic", 0.0028);
@@ -201,7 +210,6 @@ void World::render() {
     renderObjects(modelShader);
     player->render(modelShader);
     for (auto z:zombies) {
-
         z->render(modelShader);
     }
     glDisable(GL_CULL_FACE);

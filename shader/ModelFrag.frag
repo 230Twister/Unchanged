@@ -45,6 +45,8 @@ uniform sampler2DArray  texture_cascadeMap; // CSM深度贴图
 uniform sampler2D texture_spotShadowMap;    // 深度贴图
 uniform vec3 farBounds;
 
+uniform samplerCube skybox;
+
 float CSMshadow() {
     int index = 3;
     if (gl_FragCoord.z < farBounds.x) {
@@ -184,12 +186,14 @@ void main()
     // 环境光
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    vec3 result = ambient + getDirectionLight();
+    vec3 result = ambient + getDirectionLight() + getSpotLight();
     
     FragColor = vec4(result, 1.0f);
 
+    // 薄雾
     float dist = length(viewPos - FragPos);
-    vec4 FogColor = vec4(0.9f, 0.9f, 0.9f, 1.0f);
+    vec3 eyeVec = normalize(viewPos - FragPos);
+    vec4 FogColor = vec4(direction_light.diffuse, 1.0f);
     float FogFactor = 1 - exp(-0.002 * dist);
     FragColor = mix(FragColor, FogColor, FogFactor);
 
