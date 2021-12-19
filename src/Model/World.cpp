@@ -171,7 +171,7 @@ void World::renderDepthMap() {
     shadowMappingShaderPoint->use();
     shadowMappingShaderPoint->setFloat("far_plane", far_plane);
     shadowMappingShaderPoint->setVec3("lightPos", lightPos);
-    shadowMappingShader->setMat4("model", glm::mat4(1.0f));
+    shadowMappingShaderPoint->setMat4("model", glm::mat4(1.0f));
     for (unsigned int i = 0; i < 6; ++i)
         shadowMappingShaderPoint->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
     //äÖÈ¾Éî¶ÈÌùÍ¼

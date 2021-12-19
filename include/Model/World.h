@@ -14,7 +14,7 @@ class ShadowMap;
 
 class World{
 private:
-	const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;	// 定义深度贴图分辨率	
+	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;	// 定义深度贴图分辨率	
 	const unsigned int SPOT_SHADOW_WIDTH = 1024, SPOT_SHADOW_HEIGHT = 1024;	// 定义深度贴图分辨率	
 	const unsigned int SCR_WIDTH = 1200, SCR_HEIGHT = 800;					//定义窗口大小
 

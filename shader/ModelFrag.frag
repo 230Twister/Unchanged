@@ -131,8 +131,8 @@ vec3 getPointLight() {
     float closestDepth = texture(texture_shadowMap3, fragToLight).r;
     closestDepth *= far_plane;
     float currentDepth = length(fragToLight);
-    float bias = 0.05; 
-    float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
+
+    float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
     return lightColor * (1.0 - shadow) * (diffuse + specular);
 }
 
