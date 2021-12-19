@@ -5,6 +5,7 @@
 #include "Model/Star.h"
 #include "Game/PhysicsWorld.h"
 #include "Model/Player.h"
+#include "Model/Zombie.h"
 #include "ShadowMap.h"
 #include <GLFW/glfw3.h>
 
@@ -13,6 +14,10 @@ World::World(const char* world_obj) {
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
     cascadedShadowShader = new Shader("../../../shader/CascadedShadowVert.vs", "../../../shader/ShadowMappingFrag.frag", "../../../shader/CascadedShadowGeo.gs");
+
+    //点阴影渲染
+    shadowMappingShaderPoint = new Shader("../../../shader/ShadowMappingVertPoint.vs", "../../../shader/ShadowMappingFragPoint.frag", "../../../shader/ShadowMappingGPoint.gs");
+
 
     model = new Model(world_obj);
     skybox = new SkyBox();
@@ -50,6 +55,28 @@ void World::loadDepthMap() {
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    /*****************点光源的深度贴图********************/
+// 创建帧缓冲对象
+    glGenFramebuffers(1, &depthMapFBOPoint);
+    // 创建2D纹理
+    glGenTextures(1, &depthMapPoint);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthMapPoint);
+
+    for (unsigned int i = 0; i < 6; ++i)
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    // 创建帧缓冲并绑定深度贴图
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOPoint);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMapPoint, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 /**
@@ -77,6 +104,16 @@ void World::calculateLightSpaceMatrix() {
     lightProjection = glm::perspective(glm::radians(90.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     lightView = glm::lookAt(player->getPosition(), player->getPosition() + camera->Front, glm::vec3(0.0, 1.0, 0.0));
     spotSpaceMatrix = lightProjection * lightView;
+
+    /*****************点光源*******************/
+    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, near_plane, far_plane);
+    //视图矩阵乘投影矩阵获得6个不同的光空间变换矩阵
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
 }
 
 /**
@@ -96,6 +133,9 @@ void World::renderDepthMap() {
     shadowMap->transmit(cascadedShadowShader);
     renderObjects(cascadedShadowShader);
     player->render(cascadedShadowShader);
+    for (auto z : zombies) {
+        z->render(cascadedShadowShader);
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glCullFace(GL_BACK);
@@ -116,8 +156,31 @@ void World::renderDepthMap() {
     glClear(GL_DEPTH_BUFFER_BIT);
     renderObjects(shadowMappingShader);
     player->render(shadowMappingShader);
+    for (auto z : zombies) {
+        z->render(shadowMappingShader);
+    }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
+
+    /*****************点光源*******************/
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    //设置着色器
+    shadowMappingShaderPoint->use();
+    shadowMappingShaderPoint->setFloat("far_plane", far_plane);
+    shadowMappingShaderPoint->setVec3("lightPos", lightPos);
+    shadowMappingShader->setMat4("model", glm::mat4(1.0f));
+    for (unsigned int i = 0; i < 6; ++i)
+        shadowMappingShaderPoint->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+    //渲染深度贴图
+    glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOPoint);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    renderObjects(shadowMappingShaderPoint);
+    player->render(shadowMappingShader);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glCullFace(GL_BACK);
     glDisable(GL_CULL_FACE);
 }
@@ -144,6 +207,7 @@ void World::render() {
     modelShader->setMat4("projection", projection);
     modelShader->setMat4("spotSpaceMatrix", spotSpaceMatrix);
     modelShader->setVec3("viewPos", camera->Position);
+    modelShader->setBool("dying", player->isDying());
     
     if (isDay){
         modelShader->setVec3("direction_light.direction", sun->GetLightDirection());
@@ -170,21 +234,33 @@ void World::render() {
     }
     else{
         modelShader->setVec3("direction_light.direction", moon->GetLightDirection());
-        modelShader->setVec3("direction_light.ambient", glm::vec3(0.2f, 0.2f, 0.2f));
-        modelShader->setVec3("direction_light.diffuse", glm::vec3(0.6f, 0.6f, 0.6f));
-        modelShader->setVec3("direction_light.specular", glm::vec3(0.3f, 0.3f, 0.3f));
+        modelShader->setVec3("direction_light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
+        modelShader->setVec3("direction_light.diffuse", glm::vec3(0.2f, 0.2f, 0.2f));
+        modelShader->setVec3("direction_light.specular", glm::vec3(0.1f, 0.1f, 0.1f));
     }
 
     modelShader->setVec3("spot_light.position", player->getPosition());
     modelShader->setVec3("spot_light.direction", camera->Front);
     modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
-    modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
-    modelShader->setVec3("spot_light.specular", 1.0f, 1.0f, 1.0f);
+    if (player->getFlashMode()) {
+        modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
+        modelShader->setVec3("spot_light.specular", 1.0f, 1.0f, 1.0f);
+    }
+    else {
+        modelShader->setVec3("spot_light.diffuse", 0.0f, 0.0f, 0.0f);
+        modelShader->setVec3("spot_light.specular", 0.0f, 0.0f, 0.0f);
+    }
     modelShader->setFloat("spot_light.constant", 1.0f);
     modelShader->setFloat("spot_light.linear", 0.027);
     modelShader->setFloat("spot_light.quadratic", 0.0028);
     modelShader->setFloat("spot_light.cutOff", glm::cos(glm::radians(12.5f)));
     modelShader->setFloat("spot_light.outerCutOff", glm::cos(glm::radians(15.0f)));
+
+    modelShader->setVec3("point_light.ambient", glm::vec3(0.4f, 0.4f, 0.4f));
+    modelShader->setVec3("point_light.diffuse", glm::vec3(1.6f, 1.6f, 1.6f));
+    modelShader->setVec3("point_light.specular", glm::vec3(0.9f, 0.9f, 0.9f));
+    modelShader->setVec3("point_light.position", lightPos);
+    modelShader->setFloat("far_plane", far_plane);
 
     shadowMap->transmitRenderData(modelShader);
 
@@ -192,10 +268,17 @@ void World::render() {
     modelShader->setInt("texture_spotShadowMap", 3);
     glBindTexture(GL_TEXTURE_2D, spotDepthMap);
 
+    glActiveTexture(GL_TEXTURE0 + 4);
+    modelShader->setInt("texture_shadowMap3", 4);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthMapPoint);
+
     // 绘制场景
     glEnable(GL_CULL_FACE);
     renderObjects(modelShader);
     player->render(modelShader);
+    for (auto z:zombies) {
+        z->render(modelShader);
+    }
     glDisable(GL_CULL_FACE);
 
     // 传递天空盒数据
@@ -215,7 +298,6 @@ void World::render() {
 		view = camera->GetViewMatrix();
         sun->shader->setMat4("view", view);
         sun->shader->setMat4("projection", projection);
-
 		// 渲染太阳
 		renderSun();
     }
@@ -225,7 +307,6 @@ void World::render() {
         view = camera->GetViewMatrix();
         moon->shader->setMat4("view", view);
         moon->shader->setMat4("projection", projection);
-
         // 渲染月亮
         renderMoon();
     }
@@ -242,7 +323,6 @@ void World::render() {
     // Set fragment shader data
     water->waterShader->setVec3("viewPos", camera->Position);
     water->waterShader->setVec3("deepWaterColor", glm::vec3(0.1137f, 0.2745f, 0.4392f));
-    // shader.setVec3("lightDir", glm::vec3(-1.0f, -1.0f, 2.0f));
     water->waterShader->setVec3("lightDir", sun->GetLightDirection());
     water->waterShader->setInt("waveMapCount", 0);
     // 渲染水面
@@ -261,8 +341,7 @@ void World::renderObjects(Shader* shader) {
  * @brief 渲染太阳
  * @param shader 渲染使用的着色器
 */
-void World::renderSun()
-{
+void World::renderSun() {
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi;
     sun->Render(angle);
@@ -272,8 +351,7 @@ void World::renderSun()
  * @brief 渲染月亮
  * @param shader 渲染使用的着色器
 */
-void World::renderMoon()
-{
+void World::renderMoon() {
     constexpr GLfloat _pi = glm::pi<GLfloat>();
     float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi - _pi;
     moon->Render(angle);

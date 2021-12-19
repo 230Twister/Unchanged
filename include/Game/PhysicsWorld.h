@@ -3,9 +3,11 @@
 
 #include <bullet/btBulletDynamicsCommon.h>
 #include "Model/Model.h"
+#include "Model/Zombie.h"
 
 class btPairCachingGhostObject;
 class btKinematicCharacterController;
+class Player;
 
 enum class WalkDirection {
 	RIGHT, LEFT, UP, DOWN
@@ -28,13 +30,16 @@ public:
 	PhysicsWorld();
 	void addCharator(btVector3, int);
 	void addRigidBody(Model*);
-
 	void characterJump();
 	void characterWalk(WalkDirection, float);
 	void updateCharacterFront(float);
 	void characterStop();
 
 	void stepSimulation();
+	int attackTest(Player*);
+	int attackedTest();
+	void pushback(int);
+	void respawn();
 
 	btTransform& getTransform(int);
 	~PhysicsWorld();

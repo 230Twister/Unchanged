@@ -41,6 +41,14 @@ void KeyBoardListener::handle() {
 			keyBoardEvent->getWorld()->getPlayer()->transEna();
 		}
 	}
+	else if (key == GLFW_KEY_H) {
+		if (action == 1) {
+			keyBoardEvent->getWorld()->getPlayer()->transFlashMode();
+		}
+		else {
+			keyBoardEvent->getWorld()->getPlayer()->transFlashEna();
+		}
+	}
 	else {
 		physics->characterStop();
 	}

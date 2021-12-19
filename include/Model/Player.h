@@ -17,8 +17,17 @@ private:
 	glm::vec3 position;	// 玩家所在坐标
 	float yaw;
 	int health;			// 血量
+	
+	// 人称转换
 	int view_mode;
 	int view_mode_trans_ena;
+
+	// 手电筒开关
+	int flash_mode;
+	int flash_mode_trans_ena;
+
+	float attackTime;
+	bool attackState;
 
 public:
 	Player();
@@ -29,11 +38,22 @@ public:
 	void setYaw(float);
 	void transViewMode();
 	void transEna();
+	void transFlashMode();
+	void transFlashEna();
+	void setHealth(int);
+	bool setHealth(int);
+	int getHealth();
+	bool isDying() { return health <= 10; }
+	
+	void attack(float);
+	bool canAttack(float);
+	void disableAttack();
 
 	glm::vec3 getPosition();
 	Camera* getCamera();
 	Model* getBaseModel() { return model; }
 	int getViewMode() { return view_mode; }
+	int getFlashMode() { return flash_mode; }
 	~Player();
 };
 

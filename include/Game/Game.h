@@ -25,10 +25,10 @@ public:
 
 	void processInput(GLFWwindow*);
 	void loop();
-	void spawnZombie();
 	Camera* getCamera() {
 		return player->getCamera();
 	}
+	void playerAttack();
 	~Game();
 };
 

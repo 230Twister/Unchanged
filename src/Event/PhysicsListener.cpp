@@ -22,9 +22,17 @@ void PhysicsListener::handle() {
 	player->setPosition(position);
 	player->setYaw(-camera->Yaw);
 	if (player->getViewMode()) {
-		camera->Position = glm::vec3(pos.getX() - 3.0f * cos(glm::radians(camera->Yaw)), pos.getY() + 1.8f, pos.getZ() - 3.0f * sin(glm::radians(camera->Yaw)));
+		camera->Position = glm::vec3(pos.getX() - 3.0f * cos(glm::radians(camera->Yaw)), pos.getY() + 1.6f, pos.getZ() - 3.0f * sin(glm::radians(camera->Yaw)));
 	}
 	else {
 		camera->Position = glm::vec3(pos.getX(), pos.getY() + 0.45f , pos.getZ());
+	}
+
+	// Õ¨≤ΩΩ© ¨Œª÷√
+	for (int i = 0; i < world->getZombies().size(); i++) {
+		btTransform& transform = physics->getTransform(2 + i);
+		btVector3& pos = transform.getOrigin();
+		position = glm::vec3(pos.getX(), pos.getY(), pos.getZ());
+		world->getZombies()[i]->setPosition(position);
 	}
 }

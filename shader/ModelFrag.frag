@@ -43,7 +43,12 @@ uniform sampler2D texture_diffuse1;         // 漫反射贴图
 uniform sampler2D texture_specular1;        // 高光贴图
 uniform sampler2DArray  texture_cascadeMap; // CSM深度贴图
 uniform sampler2D texture_spotShadowMap;    // 深度贴图
-uniform vec3 farBounds;
+uniform vec3 farBounds;                     // 视锥分割
+uniform bool dying;
+uniform samplerCube texture_shadowMap3;
+uniform float far_plane;
+
+uniform samplerCube skybox;
 
 float CSMshadow() {
     int index = 3;
@@ -120,7 +125,15 @@ vec3 getPointLight() {
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0f);
     vec3 specular = point_light.specular * (spec * model_specular);
 
-    return diffuse + specular;
+    //计算阴影
+    vec3 lightColor = vec3(0.5);
+    vec3 fragToLight = FragPos - point_light.position;
+    float closestDepth = texture(texture_shadowMap3, fragToLight).r;
+    closestDepth *= far_plane;
+    float currentDepth = length(fragToLight);
+    float bias = 0.05; 
+    float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
+    return lightColor * (1.0 - shadow) * (diffuse + specular);
 }
 
 // 计算平行光
@@ -184,8 +197,19 @@ void main()
     // 环境光
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    vec3 result = ambient + getDirectionLight();
-    
+    vec3 result = ambient + getDirectionLight() + getSpotLight() + getPointLight();
+
     FragColor = vec4(result, 1.0f);
 
+    // 薄雾
+    float dist = length(viewPos - FragPos);
+    vec3 eyeVec = normalize(viewPos - FragPos);
+    vec4 FogColor = vec4(direction_light.diffuse, 1.0f);
+    float FogFactor = 1 - exp(-0.002 * dist);
+    FragColor = mix(FragColor, FogColor, FogFactor);
+
+    if (dying) {
+        float average = 0.2126 * FragColor.r + 0.7152 * FragColor.g + 0.0722 * FragColor.b;
+        FragColor = vec4(average, average, average, 1.0f);
+    }
 }
