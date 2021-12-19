@@ -175,11 +175,19 @@ int PhysicsWorld::attackedTest() {
 */
 void PhysicsWorld::pushback(int index) {
     btKinematicCharacterController* charater = m_character[index];
+
+    if (index > 0) {
+        charater->jump();
+        return;
+    }
+    
     btTransform& transform = m_ghostObject[index]->getWorldTransform();
     btVector3 forwardDir = transform.getBasis()[2];
     forwardDir = forwardDir.normalize();
+    forwardDir /= 2;
 
-    charater->applyImpulse(-forwardDir);
+    charater->applyImpulse(btVector3(0.0, 0.01, 0.0));
+    
 }
 
 /**

@@ -29,6 +29,7 @@ public:
 	Camera* getCamera() {
 		return player->getCamera();
 	}
+	void playerAttack();
 	~Game();
 };
 

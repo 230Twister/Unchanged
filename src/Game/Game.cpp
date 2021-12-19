@@ -36,7 +36,7 @@ void Game::init() {
 	for (int i = 0; i < 10; i++) {
 		Zombie* zombie = new Zombie(zombiePosition[i]);
 		world->addZombie(zombie);
-		physics->addCharator(btVector3(zombiePosition[i].x, zombiePosition[i].y, zombiePosition[i].z), 1);
+		physics->addCharator(btVector3(zombiePosition[i].x, zombiePosition[i].y, zombiePosition[i].z), 2 + i);
 	}
 
 	// 注册监听器
@@ -88,14 +88,17 @@ void Game::processInput(GLFWwindow* window) {
  * @brief 游戏主循环
 */
 void Game::loop() {
+	GLfloat currentFrame = glfwGetTime();
+
 	// 物理世界模拟
 	physics->stepSimulation();
 	PhysicsEvent(world, physics).call();
 
 	// 玩家攻击与被攻击检测
 	int attackZombie = physics->attackTest(player);
-	if (attackZombie) {
+	if (attackZombie && player->canAttack(currentFrame)) {
 		AttackEvent(world, physics, attackZombie).call();
+		player->disableAttack();
 	}
 	int beAttacked = physics->attackedTest();
 	if (beAttacked) {
@@ -107,7 +110,6 @@ void Game::loop() {
 	world->render();
 
 	// 时间更新
-	GLfloat currentFrame = glfwGetTime();
 	if (currentFrame - frame >= 0.1f) {
 		frame = currentFrame;
 		world->setTime(world->getTime() + 1);
@@ -119,6 +121,13 @@ void Game::spawnZombie() {
 
 	world->addZombie(zombie);
 	physics->addCharator(btVector3(10, 50, 0), 1);
+}
+
+/**
+ * @brief 让玩家发起一次攻击
+*/
+void Game::playerAttack() {
+	player->attack(glfwGetTime());
 }
 
 Game::~Game() {
