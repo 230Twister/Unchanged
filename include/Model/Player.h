@@ -15,6 +15,7 @@ private:
 	glm::vec3 position;	// 玩家所在坐标
 	float yaw;
 	int health;			// 血量
+	bool attackState;
 	int view_mode;
 	int view_mode_trans_ena;
 

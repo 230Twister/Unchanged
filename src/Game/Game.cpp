@@ -97,9 +97,9 @@ void Game::loop() {
 	if (attackZombie) {
 		AttackEvent(world, physics, attackZombie).call();
 	}
-	bool beAttacked = physics->attackedTest();
+	int beAttacked = physics->attackedTest();
 	if (beAttacked) {
-		AttackEvent(world, physics, 0).call();
+		AttackEvent(world, physics, -beAttacked).call();
 	}
 
 	// 模型世界渲染

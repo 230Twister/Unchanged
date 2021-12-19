@@ -159,9 +159,9 @@ int PhysicsWorld::attackTest(Player* player) {
 
 /**
  * @brief Íæ¼Ò±»¹¥»÷µÄ¼ì²â
- * @return ÊÇ·ñ±»¹¥»÷
+ * @return ±»ÄÄ¸ö½©Ê¬¹¥»÷
 */
-bool PhysicsWorld::attackedTest() {
+int PhysicsWorld::attackedTest() {
     ContactCallBack callback = ContactCallBack();
     btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[1];
     dynamicsWorld->contactTest(obj, callback);

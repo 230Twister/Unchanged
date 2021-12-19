@@ -12,6 +12,7 @@ private:
 
 	glm::vec3 position;
 	int health;
+	bool dead;
 public:
 	Zombie(glm::vec3);
 	void init();
@@ -20,6 +21,7 @@ public:
 
 	void setHealth(int);
 	int getHealth();
+	bool isDead();
 	void setPosition(glm::vec3);
 };
 
