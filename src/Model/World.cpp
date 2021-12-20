@@ -10,15 +10,15 @@
 #include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
-    time = 0;
+    time = 1800;
+
+    // 初始化所有shader
     shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
     cascadedShadowShader = new Shader("../../../shader/CascadedShadowVert.vs", "../../../shader/ShadowMappingFrag.frag", "../../../shader/CascadedShadowGeo.gs");
-
-    //点阴影渲染
     shadowMappingShaderPoint = new Shader("../../../shader/ShadowMappingVertPoint.vs", "../../../shader/ShadowMappingFragPoint.frag", "../../../shader/ShadowMappingGPoint.gs");
 
-
+    // 加载模型
     model = new Model(world_obj);
     skybox = new SkyBox();
     water = new Water();
@@ -243,8 +243,8 @@ void World::render() {
     modelShader->setVec3("spot_light.direction", camera->Front);
     modelShader->setVec3("spot_light.ambient", 0.0f, 0.0f, 0.0f);
     if (player->getFlashMode()) {
-        modelShader->setVec3("spot_light.diffuse", 0.9f, 0.9f, 0.9f);
-        modelShader->setVec3("spot_light.specular", 1.0f, 1.0f, 1.0f);
+        modelShader->setVec3("spot_light.diffuse", 0.7f, 0.7f, 0.7f);
+        modelShader->setVec3("spot_light.specular", 0.8f, 0.8f, 0.8f);
     }
     else {
         modelShader->setVec3("spot_light.diffuse", 0.0f, 0.0f, 0.0f);
@@ -256,11 +256,12 @@ void World::render() {
     modelShader->setFloat("spot_light.cutOff", glm::cos(glm::radians(12.5f)));
     modelShader->setFloat("spot_light.outerCutOff", glm::cos(glm::radians(15.0f)));
 
-    modelShader->setVec3("point_light.ambient", glm::vec3(0.4f, 0.4f, 0.4f));
-    modelShader->setVec3("point_light.diffuse", glm::vec3(1.6f, 1.6f, 1.6f));
-    modelShader->setVec3("point_light.specular", glm::vec3(0.9f, 0.9f, 0.9f));
+    modelShader->setVec3("point_light.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
+    modelShader->setVec3("point_light.diffuse", glm::vec3(0.6f, 0.6f, 0.6f));
+    modelShader->setVec3("point_light.specular", glm::vec3(0.8f, 0.8f, 0.8f));
     modelShader->setVec3("point_light.position", lightPos);
     modelShader->setFloat("far_plane", far_plane);
+    modelShader->setInt("time", time % DAY_TIME);
 
     shadowMap->transmitRenderData(modelShader);
 

@@ -47,9 +47,11 @@ uniform vec3 farBounds;                     // 视锥分割
 uniform bool dying;
 uniform samplerCube texture_shadowMap3;
 uniform float far_plane;
+uniform int time;
 
 uniform samplerCube skybox;
 
+// 级联阴影计算
 float CSMshadow() {
     int index = 3;
     if (gl_FragCoord.z < farBounds.x) {
@@ -125,15 +127,31 @@ vec3 getPointLight() {
     float spec = pow(max(dot(normal, halfwayDir), 0.0), 32.0f);
     vec3 specular = point_light.specular * (spec * model_specular);
 
-    //计算阴影
-    vec3 lightColor = vec3(0.5);
+    //计算阴影 PCF
+    vec3 sampleOffsetDirections[20] = vec3[]
+    (
+        vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+        vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+        vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+        vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+        vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+    );
+    float shadow = 0.0;
+    float bias = 0.05;
+    int samples = 20;
+    float viewDistance = length(viewPos - FragPos);
+    float diskRadius = (1.0 + (viewDistance / far_plane)) / 25.0;
     vec3 fragToLight = FragPos - point_light.position;
-    float closestDepth = texture(texture_shadowMap3, fragToLight).r;
-    closestDepth *= far_plane;
     float currentDepth = length(fragToLight);
+    for(int i = 0; i < samples; ++i) {
+        float closestDepth = texture(texture_shadowMap3, fragToLight + sampleOffsetDirections[i] * diskRadius).r;
+        closestDepth *= far_plane;
+        if(currentDepth - bias > closestDepth)
+            shadow += 1.0;
+    }
+    shadow /= float(samples);
 
-    float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
-    return lightColor * (1.0 - shadow) * (diffuse + specular);
+    return (1.0 - shadow) * (diffuse + specular);
 }
 
 // 计算平行光
@@ -197,8 +215,10 @@ void main()
     // 环境光
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    // vec3 result = ambient + getDirectionLight() + getSpotLight() + getPointLight();
-    vec3 result = ambient + getPointLight();
+    vec3 result = ambient + getDirectionLight() + getSpotLight();
+    if (time > 1800) {
+        result += getPointLight();
+    }
 
     FragColor = vec4(result, 1.0f);
 

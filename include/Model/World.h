@@ -40,7 +40,7 @@ private:
 
 	// 点阴影部分
 	float near_plane = 0.1f;
-	float far_plane = 25.0f;
+	float far_plane = 20.0f;
 
 	std::vector<glm::mat4> shadowTransforms;
 
