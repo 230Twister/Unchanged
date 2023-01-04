@@ -10,13 +10,13 @@
 #include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
-    time = 1800;
+    time = 0;
 
     // 初始化所有shader
-    shadowMappingShader = new Shader("../../../shader/ShadowMappingVert.vs", "../../../shader/ShadowMappingFrag.frag");
+    shadowMappingShader = new Shader("../../../shader/shadow/ShadowMappingVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag");
+    cascadedShadowShader = new Shader("../../../shader/shadow/CascadedShadowVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag", "../../../shader/shadow/CascadedShadowGeo.gs");
+    shadowMappingPointShader = new Shader("../../../shader/shadow/ShadowMappingVertPoint.vs", "../../../shader/shadow/ShadowMappingFragPoint.frag", "../../../shader/shadow/ShadowMappingGPoint.gs");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
-    cascadedShadowShader = new Shader("../../../shader/CascadedShadowVert.vs", "../../../shader/ShadowMappingFrag.frag", "../../../shader/CascadedShadowGeo.gs");
-    shadowMappingShaderPoint = new Shader("../../../shader/ShadowMappingVertPoint.vs", "../../../shader/ShadowMappingFragPoint.frag", "../../../shader/ShadowMappingGPoint.gs");
 
     // 加载模型
     model = new Model(world_obj);
@@ -57,7 +57,7 @@ void World::loadDepthMap() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     /*****************点光源的深度贴图********************/
-// 创建帧缓冲对象
+    // 创建帧缓冲对象
     glGenFramebuffers(1, &depthMapFBOPoint);
     // 创建2D纹理
     glGenTextures(1, &depthMapPoint);
@@ -107,7 +107,7 @@ void World::calculateLightSpaceMatrix() {
 
     /*****************点光源*******************/
     glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, near_plane, far_plane);
-    //视图矩阵乘投影矩阵获得6个不同的光空间变换矩阵
+    // 视图矩阵乘投影矩阵获得6个不同的光空间变换矩阵
     shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
     shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
     shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
@@ -168,18 +168,18 @@ void World::renderDepthMap() {
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     //设置着色器
-    shadowMappingShaderPoint->use();
-    shadowMappingShaderPoint->setFloat("far_plane", far_plane);
-    shadowMappingShaderPoint->setVec3("lightPos", lightPos);
-    shadowMappingShaderPoint->setMat4("model", glm::mat4(1.0f));
+    shadowMappingPointShader->use();
+    shadowMappingPointShader->setFloat("far_plane", far_plane);
+    shadowMappingPointShader->setVec3("lightPos", lightPos);
+    shadowMappingPointShader->setMat4("model", glm::mat4(1.0f));
     for (unsigned int i = 0; i < 6; ++i)
-        shadowMappingShaderPoint->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
+        shadowMappingPointShader->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
     //渲染深度贴图
     glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOPoint);
     glClear(GL_DEPTH_BUFFER_BIT);
-    renderObjects(shadowMappingShaderPoint);
-    player->render(shadowMappingShaderPoint);
+    renderObjects(shadowMappingPointShader);
+    player->render(shadowMappingPointShader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glCullFace(GL_BACK);
     glDisable(GL_CULL_FACE);

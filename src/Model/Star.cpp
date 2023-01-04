@@ -46,7 +46,7 @@ Star::Star(glm::vec4 c, GLfloat r, GLfloat t)
             offset += 4;
         }
     }
-    shader = new Shader("../../../shader/SMVert.vs", "../../../shader/SMFrag.frag");
+    shader = new Shader("../../../shader/StarVert.vs", "../../../shader/StarFrag.frag");
     LoadSun();
 }
 

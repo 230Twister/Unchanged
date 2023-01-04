@@ -119,7 +119,7 @@ void Game::loop() {
 	world->render();
 
 	// 时间更新
-	if (currentFrame - frame >= 0.1f) {
+	if (currentFrame - frame >= 0.5f) {
 		frame = currentFrame;
 		world->setTime(world->getTime() + 1);
 	}

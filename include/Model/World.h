@@ -34,7 +34,7 @@ private:
 	unsigned int spotDepthMapFBO;		// 聚光深度帧缓冲
 
 	Shader* modelShader;				// 模型渲染着色器
-	Shader* shadowMappingShader;		// 深度贴图着色器
+	Shader* shadowMappingShader;		// 聚光深度贴图着色器
 	Shader* cascadedShadowShader;		// 级联阴影着色器
 	ShadowMap* shadowMap;
 
@@ -44,7 +44,7 @@ private:
 
 	std::vector<glm::mat4> shadowTransforms;
 
-	Shader* shadowMappingShaderPoint;								// 点阴影深度贴图着色器
+	Shader* shadowMappingPointShader;								// 点阴影深度贴图着色器
 
 	unsigned int depthMapPoint;										// 深度贴图
 	unsigned int depthMapFBOPoint;									// 深度帧缓冲

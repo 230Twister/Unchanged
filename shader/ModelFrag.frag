@@ -215,7 +215,10 @@ void main()
     // »·¾³¹â
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    vec3 result = ambient + getDirectionLight() + getSpotLight();
+    vec3 result = ambient + getDirectionLight();
+    if (spot_light.diffuse != 0.0f) {
+        result += getSpotLight();
+    }
     if (time > 1800) {
         result += getPointLight();
     }

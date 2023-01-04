@@ -27,7 +27,7 @@ Water::Water() {
 		}
 	}
 
-	waterShader = new Shader("../../../shader/WaterVert.vs", "../../../shader/WaterFrag.frag");
+	waterShader = new Shader("../../../shader/water/WaterVert.vs", "../../../shader/water/WaterFrag.frag");
 	loadWater();
 
 	windDir = glm::vec2(0.5f, 0.5f);
