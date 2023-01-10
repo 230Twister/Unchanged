@@ -131,6 +131,19 @@ void SkyBox::loadCubemap() {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	}
+
+	// 导入噪声图纹理
+	glGenTextures(1, &noiseTexture);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	int width, height, nrChannels;
+	unsigned char* image = stbi_load("../../../skybox/noise.png", &width, &height, &nrChannels, 3);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);   // 生成纹理
+	stbi_image_free(image);
+
 }
 
 /**
@@ -151,8 +164,14 @@ void SkyBox::renderSkybox(unsigned int time) {
 		index = 3;
 	}
 	glBindVertexArray(skyboxVAO);
+
 	glActiveTexture(GL_TEXTURE0);
+	skyboxShader->setInt("skybox", 0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture[index]);
+	glActiveTexture(GL_TEXTURE1);
+	skyboxShader->setInt("noisetex", 1);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 	glDepthFunc(GL_LESS);

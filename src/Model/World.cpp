@@ -10,7 +10,7 @@
 #include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
-    time = 0;
+    time = 400;
 
     // ³õÊ¼»¯ËùÓÐshader
     shadowMappingShader = new Shader("../../../shader/shadow/ShadowMappingVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag");
@@ -265,11 +265,11 @@ void World::render() {
 
     shadowMap->transmitRenderData(modelShader);
 
-    glActiveTexture(GL_TEXTURE0 + 3);
+    glActiveTexture(GL_TEXTURE3);
     modelShader->setInt("texture_spotShadowMap", 3);
     glBindTexture(GL_TEXTURE_2D, spotDepthMap);
 
-    glActiveTexture(GL_TEXTURE0 + 4);
+    glActiveTexture(GL_TEXTURE4);
     modelShader->setInt("texture_shadowMap3", 4);
     glBindTexture(GL_TEXTURE_CUBE_MAP, depthMapPoint);
 
@@ -282,27 +282,17 @@ void World::render() {
     }
     glDisable(GL_CULL_FACE);
 
-    // ´«µÝÌì¿ÕºÐÊý¾Ý
-    glDepthFunc(GL_LEQUAL);
-    skybox->skyboxShader->use();
-    view = glm::mat4(glm::mat3(camera->GetViewMatrix()));
-    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_WIDTH, 0.1f, 1000.0f);
-    skybox->skyboxShader->setMat4("view", view);
-    skybox->skyboxShader->setMat4("projection", projection);
-    // äÖÈ¾Ìì¿ÕºÐ
-    skybox->renderSkybox(time);
-
     // °×ÌìÌ«Ñô£¬ÍíÉÏÔÂÁÁ
-    if (isDay){
-		sun->shader->use();
-		projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-		view = camera->GetViewMatrix();
+    if (isDay) {
+        sun->shader->use();
+        projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
+        view = camera->GetViewMatrix();
         sun->shader->setMat4("view", view);
         sun->shader->setMat4("projection", projection);
-		// äÖÈ¾Ì«Ñô
-		renderSun();
+        // äÖÈ¾Ì«Ñô
+        renderSun();
     }
-    else{
+    else {
         moon->shader->use();
         projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
         view = camera->GetViewMatrix();
@@ -311,6 +301,20 @@ void World::render() {
         // äÖÈ¾ÔÂÁÁ
         renderMoon();
     }
+
+    // ´«µÝÌì¿ÕºÐÊý¾Ý
+    glDepthFunc(GL_LEQUAL);
+    skybox->skyboxShader->use();
+    view = glm::mat4(glm::mat3(camera->GetViewMatrix()));
+    projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_WIDTH, 0.1f, 1000.0f);
+    skybox->skyboxShader->setMat4("view", view);
+    skybox->skyboxShader->setMat4("projection", projection);
+    skybox->skyboxShader->setVec3("viewPos", camera->Position);
+    glm::vec3 light_dir = sun->GetLightDirection();
+    light_dir *= 300;
+    skybox->skyboxShader->setVec3("lightPos", light_dir);
+    // äÖÈ¾Ìì¿ÕºÐ
+    skybox->renderSkybox(time);
 
     // Ë®Ãæ
     water->waterShader->use();
