@@ -2,7 +2,6 @@
 #include "Model/World.h"
 #include "Model/SkyBox.h"
 #include "Model/Water.h"
-#include "Model/Star.h"
 #include "Game/PhysicsWorld.h"
 #include "Model/Player.h"
 #include "Model/Zombie.h"
@@ -17,6 +16,7 @@ World::World(const char* world_obj) {
     cascadedShadowShader = new Shader("../../../shader/shadow/CascadedShadowVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag", "../../../shader/shadow/CascadedShadowGeo.gs");
     shadowMappingPointShader = new Shader("../../../shader/shadow/ShadowMappingVertPoint.vs", "../../../shader/shadow/ShadowMappingFragPoint.frag", "../../../shader/shadow/ShadowMappingGPoint.gs");
     modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
+    hdrShader = new Shader("../../../shader/HDRVert.vs", "../../../shader/HDRFrag.frag");
 
     // 加载模型
     model = new Model(world_obj);
@@ -25,6 +25,27 @@ World::World(const char* world_obj) {
     shadowMap = new ShadowMap();
 
     loadDepthMap();
+
+    // 构建HDR帧缓冲
+    glGenFramebuffers(1, &hdrFBO);
+
+    // 构建颜色缓冲
+    glGenTextures(1, &colorBuffer);
+    glBindTexture(GL_TEXTURE_2D, colorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // 构建深度缓冲
+    glGenRenderbuffers(1, &hdrDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, hdrDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCR_WIDTH, SCR_HEIGHT);
+
+    // 绑定缓冲
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorBuffer, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, hdrDepth);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 /**
@@ -187,6 +208,10 @@ void World::render() {
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    // 先渲染到浮点帧缓冲中
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     // 使用深度贴图渲染场景
     modelShader->use();
     glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
@@ -298,6 +323,46 @@ void World::render() {
     water->waterShader->setInt("waveMapCount", 0);
     // 渲染水面
     water->renderWater();
+
+    // 再将浮点帧缓冲中的颜色缓冲经转换后输出
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    hdrShader->use();
+    glActiveTexture(GL_TEXTURE0);
+    hdrShader->setInt("hdrBuffer", 0);
+    glBindTexture(GL_TEXTURE_2D, colorBuffer);
+    hdrShader->setFloat("exposure", 1.0f);
+    renderQuad();
+}
+
+/**
+ * @brief 输出一个满屏的四边形
+*/
+void World::renderQuad() {
+    static GLuint quadVAO = 0;
+    static GLuint quadVBO;
+
+    if (quadVAO == 0) {
+        float quadVertices[] = {
+            // 坐标        // 纹理坐标
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
 }
 
 /**
@@ -374,7 +439,10 @@ Model* World::getBaseModel() {
 World::~World() {
     delete cascadedShadowShader;
     delete shadowMappingShader;
+    delete shadowMappingPointShader;
     delete modelShader;
+    delete hdrShader;
+
     delete shadowMap;
     delete model;
     delete skybox;
