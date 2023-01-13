@@ -232,6 +232,7 @@ void main()
     float FogFactor = 1 - exp(-0.002 * dist);
     FragColor = mix(FragColor, FogColor, FogFactor);
 
+    // ±ôËÀ×´Ì¬
     if (dying) {
         float average = 0.2126 * FragColor.r + 0.7152 * FragColor.g + 0.0722 * FragColor.b;
         FragColor = vec4(average, average, average, 1.0f);

@@ -14,16 +14,13 @@ class ShadowMap;
 
 class World{
 private:
-	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;	// 定义深度贴图分辨率	
+	const unsigned int SHADOW_WIDTH = 2048, SHADOW_HEIGHT = 2048;			// 定义深度贴图分辨率	
 	const unsigned int SPOT_SHADOW_WIDTH = 1024, SPOT_SHADOW_HEIGHT = 1024;	// 定义深度贴图分辨率	
 	const unsigned int SCR_WIDTH = 1200, SCR_HEIGHT = 800;					//定义窗口大小
 
 	Model* model;
 	Player* player;
 	std::vector<Zombie*> zombies;
-
-	Star* sun;
-	Star* moon;
 
 	unsigned int time;					// 当前时间
 	static const int DAY_TIME = 3600;	// 一天的时间
@@ -34,33 +31,28 @@ private:
 	unsigned int spotDepthMapFBO;		// 聚光深度帧缓冲
 
 	Shader* modelShader;				// 模型渲染着色器
+	Shader* shadowMappingPointShader;	// 点阴影深度贴图着色器
 	Shader* shadowMappingShader;		// 聚光深度贴图着色器
 	Shader* cascadedShadowShader;		// 级联阴影着色器
-	ShadowMap* shadowMap;
+	ShadowMap* shadowMap;				// 级联阴影实现
 
 	// 点阴影部分
-	float near_plane = 0.1f;
-	float far_plane = 20.0f;
-
+	float nearPlane = 0.1f;
+	float farPlane = 20.0f;
 	std::vector<glm::mat4> shadowTransforms;
-
-	Shader* shadowMappingPointShader;								// 点阴影深度贴图着色器
-
 	unsigned int depthMapPoint;										// 深度贴图
 	unsigned int depthMapFBOPoint;									// 深度帧缓冲
-	glm::vec3 lightPos = glm::vec3(41.5, 20.0, 27.0);				// 点光源位置
+	glm::vec3 pointLightPosition = glm::vec3(41.5, 20.0, 27.0);				// 点光源位置
 	
-	// 点阴影部分结束
-	Camera* camera;	// 摄像机
-
-	SkyBox* skybox;
-	Water* water;
+	Camera* camera;		// 摄像机
+	SkyBox* skybox;		// 天空
+	Water* water;		// 水面
 
 	void calculateLightSpaceMatrix();
 	void renderObjects(Shader*);
-	void renderSun();
-	void renderMoon();
 	void loadDepthMap();
+	glm::vec3 getLightPosition();
+	glm::vec3 getLightDirection();
 
 public:
 	World(const char*);

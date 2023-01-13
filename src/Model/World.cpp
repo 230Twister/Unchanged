@@ -10,7 +10,7 @@
 #include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
-    time = 400;
+    time = 0;
 
     // 初始化所有shader
     shadowMappingShader = new Shader("../../../shader/shadow/ShadowMappingVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag");
@@ -22,8 +22,6 @@ World::World(const char* world_obj) {
     model = new Model(world_obj);
     skybox = new SkyBox();
     water = new Water();
-    sun = new Star(glm::vec4(1.0f, 1.0f, 0.7f, 1.0f), 15.0f, 300.0f);
-    moon = new Star(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f), 10.0f, 300.0f);
     shadowMap = new ShadowMap();
 
     loadDepthMap();
@@ -84,18 +82,7 @@ void World::loadDepthMap() {
 */
 void World::calculateLightSpaceMatrix() {
     glm::mat4 lightProjection, lightView;
-    glm::vec3 light_pos;
-
-    if (time % DAY_TIME < DAY) {
-        glm::vec3 light_dir = sun->GetLightDirection();
-        light_dir *= 300;
-        light_pos = light_dir;
-    }
-    else {
-        glm::vec3 light_dir = moon->GetLightDirection();
-        light_dir *= 300;
-        light_pos = light_dir;
-    }
+    glm::vec3 light_pos = getLightPosition();
     
     // 平行光
     shadowMap->setup(camera, light_pos);
@@ -106,14 +93,14 @@ void World::calculateLightSpaceMatrix() {
     spotSpaceMatrix = lightProjection * lightView;
 
     /*****************点光源*******************/
-    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, near_plane, far_plane);
+    glm::mat4 shadowProj = glm::perspective(glm::radians(90.0f), (float)SHADOW_WIDTH / (float)SHADOW_HEIGHT, nearPlane, farPlane);
     // 视图矩阵乘投影矩阵获得6个不同的光空间变换矩阵
-    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
-    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
-    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
-    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)));
-    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
-    shadowTransforms.push_back(shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPosition, pointLightPosition + glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPosition, pointLightPosition + glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPosition, pointLightPosition + glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPosition, pointLightPosition + glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPosition, pointLightPosition + glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
+    shadowTransforms.push_back(shadowProj * glm::lookAt(pointLightPosition, pointLightPosition + glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f)));
 }
 
 /**
@@ -169,8 +156,8 @@ void World::renderDepthMap() {
     glCullFace(GL_FRONT);
     //设置着色器
     shadowMappingPointShader->use();
-    shadowMappingPointShader->setFloat("far_plane", far_plane);
-    shadowMappingPointShader->setVec3("lightPos", lightPos);
+    shadowMappingPointShader->setFloat("far_plane", farPlane);
+    shadowMappingPointShader->setVec3("lightPos", pointLightPosition);
     shadowMappingPointShader->setMat4("model", glm::mat4(1.0f));
     for (unsigned int i = 0; i < 6; ++i)
         shadowMappingPointShader->setMat4("shadowMatrices[" + std::to_string(i) + "]", shadowTransforms[i]);
@@ -193,6 +180,9 @@ void World::render() {
     int currentTime = time % DAY_TIME;
     bool isDay = (currentTime < DAY);
 
+    glm::vec3 ligh_pos = getLightPosition();
+    glm::vec3 ligh_dir = getLightDirection();
+
     // 重置视口
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -208,10 +198,9 @@ void World::render() {
     modelShader->setMat4("spotSpaceMatrix", spotSpaceMatrix);
     modelShader->setVec3("viewPos", camera->Position);
     modelShader->setBool("dying", player->isDying());
+    modelShader->setVec3("direction_light.direction", ligh_dir);
     
     if (isDay){
-        modelShader->setVec3("direction_light.direction", sun->GetLightDirection());
-
         // 线性计算白天光线变化
         int noon = DAY / 2;
         float a_morning = 0.2f + (2.0f * currentTime) / DAY_TIME;
@@ -233,7 +222,6 @@ void World::render() {
         }
     }
     else{
-        modelShader->setVec3("direction_light.direction", moon->GetLightDirection());
         modelShader->setVec3("direction_light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
         modelShader->setVec3("direction_light.diffuse", glm::vec3(0.2f, 0.2f, 0.2f));
         modelShader->setVec3("direction_light.specular", glm::vec3(0.1f, 0.1f, 0.1f));
@@ -259,8 +247,8 @@ void World::render() {
     modelShader->setVec3("point_light.ambient", glm::vec3(0.0f, 0.0f, 0.0f));
     modelShader->setVec3("point_light.diffuse", glm::vec3(0.6f, 0.6f, 0.6f));
     modelShader->setVec3("point_light.specular", glm::vec3(0.8f, 0.8f, 0.8f));
-    modelShader->setVec3("point_light.position", lightPos);
-    modelShader->setFloat("far_plane", far_plane);
+    modelShader->setVec3("point_light.position", pointLightPosition);
+    modelShader->setFloat("far_plane", farPlane);
     modelShader->setInt("time", time % DAY_TIME);
 
     shadowMap->transmitRenderData(modelShader);
@@ -282,26 +270,6 @@ void World::render() {
     }
     glDisable(GL_CULL_FACE);
 
-    // 白天太阳，晚上月亮
-    if (isDay) {
-        sun->shader->use();
-        projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        view = camera->GetViewMatrix();
-        sun->shader->setMat4("view", view);
-        sun->shader->setMat4("projection", projection);
-        // 渲染太阳
-        renderSun();
-    }
-    else {
-        moon->shader->use();
-        projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1000.0f);
-        view = camera->GetViewMatrix();
-        moon->shader->setMat4("view", view);
-        moon->shader->setMat4("projection", projection);
-        // 渲染月亮
-        renderMoon();
-    }
-
     // 传递天空盒数据
     glDepthFunc(GL_LEQUAL);
     skybox->skyboxShader->use();
@@ -310,9 +278,7 @@ void World::render() {
     skybox->skyboxShader->setMat4("view", view);
     skybox->skyboxShader->setMat4("projection", projection);
     skybox->skyboxShader->setVec3("viewPos", camera->Position);
-    glm::vec3 light_dir = sun->GetLightDirection();
-    light_dir *= 300;
-    skybox->skyboxShader->setVec3("lightPos", light_dir);
+    skybox->skyboxShader->setVec3("lightPos", ligh_pos);
     // 渲染天空盒
     skybox->renderSkybox(time);
 
@@ -328,7 +294,7 @@ void World::render() {
     // Set fragment shader data
     water->waterShader->setVec3("viewPos", camera->Position);
     water->waterShader->setVec3("deepWaterColor", glm::vec3(0.1137f, 0.2745f, 0.4392f));
-    water->waterShader->setVec3("lightDir", sun->GetLightDirection());
+    water->waterShader->setVec3("lightDir", ligh_dir);
     water->waterShader->setInt("waveMapCount", 0);
     // 渲染水面
     water->renderWater();
@@ -343,23 +309,22 @@ void World::renderObjects(Shader* shader) {
 }
 
 /**
- * @brief 渲染太阳
- * @param shader 渲染使用的着色器
+ * @brief 获取当前平行光光源位置
+ * @return shader 渲染使用的着色器
 */
-void World::renderSun() {
-    constexpr GLfloat _pi = glm::pi<GLfloat>();
-    float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi;
-    sun->Render(angle);
+glm::vec3 World::getLightPosition() {
+    return getLightDirection() *= 120;
 }
 
 /**
- * @brief 渲染月亮
- * @param shader 渲染使用的着色器
+ * @brief 获取当前平行光光源方向
+ * @return shader 渲染使用的着色器
 */
-void World::renderMoon() {
-    constexpr GLfloat _pi = glm::pi<GLfloat>();
-    float angle = (float)(time) / (float)(DAY_TIME) * 2 * _pi - _pi;
-    moon->Render(angle);
+glm::vec3 World::getLightDirection() {
+    constexpr GLfloat PI = glm::pi<GLfloat>();
+    float angle = (float)time / (float)DAY_TIME * 2 * PI;
+    if (time > DAY) angle -= PI;
+    return glm::vec3(cos(angle), sin(angle), 0.0f);
 }
 
 
@@ -412,7 +377,6 @@ World::~World() {
     delete modelShader;
     delete shadowMap;
     delete model;
-    delete sun;
     delete skybox;
     delete water;
 

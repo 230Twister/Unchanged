@@ -6,7 +6,7 @@ in vec3 TexCoords;
 uniform samplerCube skybox;
 uniform sampler2D noisetex;                 // 噪声图
 uniform vec3 viewPos;                       // 观察者位置
-uniform vec3 lightPos;
+uniform vec3 lightPos;                      // 太阳位置
 
 #define bottom 55   // 云层底部
 #define top 62      // 云层顶部
@@ -78,15 +78,27 @@ vec4 getCloud() {
     return colorSum;
 }
 
+vec4 getSun() {
+    vec4 sunColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    float dist = 1.0f - dot(normalize(lightPos - viewPos), normalize(TexCoords - viewPos));
+    if (dist < 0.001f) {
+        return sunColor;
+    }
+    return vec4(0);
+}
+
 void main()
 {    
     FragColor = texture(skybox, TexCoords);
+    vec4 sunColor = getSun();
+    if (sunColor.a != 0.0f) FragColor.rgb = sunColor.rgb;
+
     vec4 cloud = getCloud();
 
     // 薄雾，远处的云渐渐与天空融合
-    float dist = length(viewPos - TexCoords);
-    dist = max(dist, 0.0f);
-    float FogFactor = 1 - exp(-0.001 * dist);
+    float dist = length(viewPos - TexCoords) - abs(TexCoords.y - viewPos.y);
+    dist = max(dist, 0.0f) * 0.5;
+    float FogFactor = 1 - exp(-0.003 * dist);
     cloud = mix(cloud, FragColor, FogFactor);
 
     FragColor.rgb = FragColor.rgb * (1.0 - cloud.a) + cloud.rgb;
