@@ -1,7 +1,10 @@
 #include "Model/SkyBox.h"
+#include "Util/FastNoiseLite.h"
 #include <glad/glad.h>
 #include <iostream>
+#define STB_IMAGE_WRITE_IMPLEMENTATION 
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 float SkyBox::skyboxVertices[108] = {
 		-400.0f,  400.0f, -400.0f,
@@ -79,6 +82,7 @@ SkyBox::SkyBox() {
 
 	loadSkybox();
 	loadCubemap();
+	loadNoiseTexture();
 }
 
 SkyBox::~SkyBox() {
@@ -131,19 +135,49 @@ void SkyBox::loadCubemap() {
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 	}
+}
 
-	// 导入噪声图纹理
+/**
+ * @brief 导入噪声图纹理
+*/
+void SkyBox::loadNoiseTexture() {
+	srand((unsigned)time(0));
+
 	glGenTextures(1, &noiseTexture);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	FastNoiseLite noise;
+	noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
+	noise.SetFrequency(0.09);
+	noise.SetSeed(rand());
+	const int NOISE_WIDTH = 512;
+	float* noiseData = new float[NOISE_WIDTH * NOISE_WIDTH];
+	int index = 0;
+	for (int y = 0; y < NOISE_WIDTH; y++)
+		for (int x = 0; x < NOISE_WIDTH; x++)
+			noiseData[index++] = noise.GetNoise((float)x, (float)y);
+	unsigned char* gen_img = new unsigned char[NOISE_WIDTH * NOISE_WIDTH * 3];
+	float fmax = noiseData[0], fmin = noiseData[0];
+	for (int i = 1; i < NOISE_WIDTH * NOISE_WIDTH; i++) {
+		fmax = std::max(fmax, noiseData[i]);
+		fmin = std::min(fmin, noiseData[i]);
+	}
+	float scale = 255 / (fmax - fmin);
+	for (int i = 0; i < NOISE_WIDTH * NOISE_WIDTH; i++) {
+		unsigned char value = (noiseData[i] - fmin) * scale;
+		gen_img[i * 3] = gen_img[i * 3 + 1] = gen_img[i * 3 + 2] = value;
+	}
+	stbi_write_png("test.png", NOISE_WIDTH, NOISE_WIDTH, 3, gen_img, 0);
+	delete[] noiseData;
+	delete[] gen_img;
+
 	int width, height, nrChannels;
-	unsigned char* image = stbi_load("../../../skybox/noise.png", &width, &height, &nrChannels, 3);
+	unsigned char* image = stbi_load("test.png", &width, &height, &nrChannels, 3);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);   // 生成纹理
 	stbi_image_free(image);
-
 }
 
 /**

@@ -304,6 +304,7 @@ void World::render() {
     skybox->skyboxShader->setMat4("projection", projection);
     skybox->skyboxShader->setVec3("viewPos", camera->Position);
     skybox->skyboxShader->setVec3("lightPos", ligh_pos);
+    skybox->skyboxShader->setInt("time", time);
     // äÖÈ¾Ìì¿ÕºÐ
     skybox->renderSkybox(time);
 

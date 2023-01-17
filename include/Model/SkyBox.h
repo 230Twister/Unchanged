@@ -14,6 +14,7 @@ public:
 private:
 	void loadSkybox();
 	void loadCubemap();
+	void loadNoiseTexture();
 	unsigned int skyboxVAO;
 	unsigned int skyboxVBO;
 	unsigned int cubemapTexture[4];

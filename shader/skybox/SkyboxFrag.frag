@@ -7,14 +7,16 @@ uniform samplerCube skybox;
 uniform sampler2D noisetex;                 // 噪声图
 uniform vec3 viewPos;                       // 观察者位置
 uniform vec3 lightPos;                      // 太阳位置
+uniform int time;                           // 游戏时间
 
-#define bottom 55   // 云层底部
-#define top 62      // 云层顶部
+#define bottom 45   // 云层底部
+#define top 52      // 云层顶部
 #define width 100    // 云层 xz 坐标范围
 #define baseBright  vec3(1.26,1.25,1.29)    // 基础颜色 -- 亮部
 #define baseDark    vec3(0.31,0.31,0.32)    // 基础颜色 -- 暗部
 #define lightBright vec3(1.29, 1.17, 1.05)  // 光照颜色 -- 亮部
 #define lightDark   vec3(0.7,0.75,0.8)      // 光照颜色 -- 暗部
+#define PI 3.1415926538
 
 float getDensity(vec3 pos) {
     // 高度衰减
@@ -23,6 +25,8 @@ float getDensity(vec3 pos) {
     float weight = 1.0 - 2.0 * abs(mid - pos.y) / h;
     weight = pow(weight, 0.5);
 
+    pos.x += time * 0.05;
+    pos.x += 100; pos.z += 100;
     vec2 coord = pos.xz * 0.0025;
     float noise = texture2D(noisetex, coord).x;
 	noise += texture2D(noisetex, coord * 3.5).x / 3.5;
@@ -67,7 +71,7 @@ vec4 getCloud() {
         vec3 lightDir = normalize(lightPos - point);        // 光源方向
         float lightDensity = getDensity(point + lightDir);  // 向光源方向步进一步然后采样云层密度
         float delta = clamp(density - lightDensity, 0.0f, 1.0f);
-        density *= 0.5;
+        density *= 0.7;
 
         vec3 base = mix(baseBright, baseDark, density) * density;
         vec3 light = mix(lightDark, lightBright, delta);
@@ -78,20 +82,51 @@ vec4 getCloud() {
     return colorSum;
 }
 
-vec4 getSun() {
-    vec4 sunColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    float dist = 1.0f - dot(normalize(lightPos - viewPos), normalize(TexCoords - viewPos));
-    if (dist < 0.001f) {
-        return sunColor;
-    }
-    return vec4(0);
+vec3 mie(float dist, vec3 sunL){
+    return max(exp(-pow(dist, 0.25)) * sunL - 0.4, 0.0);
+}
+
+vec4 getSky() {
+    vec3 pos = normalize(TexCoords);
+    vec3 lpos = normalize(lightPos);
+    
+    float coeiff = 0.25;
+    vec3 totalSkyLight = vec3(0.3, 0.5, 1.0);
+    float sunDistance = acos(dot(pos, lpos)) * PI;
+
+    float scatterMult = clamp(sunDistance, 0.0, 1.0);
+	float sun = clamp(1.0 - smoothstep(0.01, 0.11, scatterMult), 0.0, 1.0);
+
+    float dist = pos.y;
+    float circleAng = dot(normalize(vec3(pos.x, 0.0, pos.z)), normalize(vec3(lpos.x, 0.0, lpos.z)));
+    dist += mix(0.0f, 0.3f, clamp(1.0 - circleAng, 0.0f, 1.0f));
+    dist = clamp(dist, 0.03, 0.8);
+	dist = (coeiff * mix(scatterMult, 1.0, dist)) / dist;
+    
+    vec3 mieScatter = mie(sunDistance, vec3(1.1));
+	
+	vec3 color = dist * totalSkyLight;
+    
+    color = max(color, 0.0);
+
+	color = max(mix(pow(color, 1.0 - color),
+	color / (2.0 * color + 0.5 - color),
+	clamp(lpos.y * 4.0, 0.4, 1.0)), 0.0)
+	+ sun + mieScatter;
+	
+	color *=  (pow(1.0 - scatterMult, 10.0) * 10.0) + 1.0;
+	
+	float underscatter = distance(lpos.y * 0.5 + 0.5, 1.0);
+	color = mix(color, vec3(0.0), clamp(underscatter, 0.0, 1.0));
+	
+    color /= (2.0 * color + 0.5 - color);
+    color.b += mix(0.0f, 0.2f, lpos.y);
+	return vec4(color, 1.0f);	
 }
 
 void main()
-{    
-    FragColor = texture(skybox, TexCoords);
-    vec4 sunColor = getSun();
-    if (sunColor.a != 0.0f) FragColor.rgb = sunColor.rgb;
+{   
+    FragColor = getSky();
 
     vec4 cloud = getCloud();
 
