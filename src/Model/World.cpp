@@ -9,7 +9,7 @@
 #include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
-    time = 0;
+    time = 00;
 
     // 初始化所有shader
     shadowMappingShader = new Shader("../../../shader/shadow/ShadowMappingVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag");
@@ -222,18 +222,17 @@ void World::render() {
     modelShader->setMat4("projection", projection);
     modelShader->setMat4("spotSpaceMatrix", spotSpaceMatrix);
     modelShader->setVec3("viewPos", camera->Position);
-    modelShader->setBool("dying", player->isDying());
     modelShader->setVec3("direction_light.direction", ligh_dir);
     
     if (isDay){
-        // 线性计算白天光线变化
+        // 线性计算白天光线变化——经验公式
         int noon = DAY / 2;
-        float a_morning = 0.2f + (2.0f * currentTime) / DAY_TIME;
-        float d_morning = 0.6f + (1.2f * currentTime) / DAY_TIME;
-        float s_morning = 0.3f + (1.6f * currentTime) / DAY_TIME;
-        float a_afternoon = 1.2f - (2.0f * currentTime) / DAY_TIME;
-        float d_afternoon = 1.2f - (1.2f * currentTime) / DAY_TIME;
-        float s_afternoon = 1.1f - (1.6f * currentTime) / DAY_TIME;
+        float a_morning = 0.2f + (3.2f * currentTime) / DAY_TIME; // 1.0
+        float d_morning = 0.6f + (3.2f * currentTime) / DAY_TIME; // 1.4
+        float s_morning = 0.4f + (4.8f * currentTime) / DAY_TIME; // 1.6
+        float a_afternoon = 2.05f - (4.0f * currentTime) / DAY_TIME;
+        float d_afternoon = 2.6f - (4.8f * currentTime) / DAY_TIME;
+        float s_afternoon = 3.25f - (6.4f * currentTime) / DAY_TIME;
         if (currentTime < noon)
         {
             modelShader->setVec3("direction_light.ambient", glm::vec3(a_morning, a_morning, a_morning));
@@ -333,6 +332,7 @@ void World::render() {
     hdrShader->setInt("hdrBuffer", 0);
     glBindTexture(GL_TEXTURE_2D, colorBuffer);
     hdrShader->setFloat("exposure", 1.0f);
+    hdrShader->setBool("dying", player->isDying());
     renderQuad();
 }
 

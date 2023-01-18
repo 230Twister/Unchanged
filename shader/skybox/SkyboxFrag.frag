@@ -76,9 +76,10 @@ vec4 getCloud() {
         vec3 base = mix(baseBright, baseDark, density) * density;
         vec3 light = mix(lightDark, lightBright, delta);
         vec4 color = vec4(base * light, density);
+        
         colorSum += color * (1.0 - colorSum.a);
     }
-
+    colorSum *= mix(1.0, 0.15, clamp((time - 1800) * 0.01, 0.0, 1.0));
     return colorSum;
 }
 
@@ -86,9 +87,12 @@ vec3 mie(float dist, vec3 sunL){
     return max(exp(-pow(dist, 0.25)) * sunL - 0.4, 0.0);
 }
 
+// 经验公式渲染天空
+// https://www.shadertoy.com/view/4tVSRt
 vec4 getSky() {
     vec3 pos = normalize(TexCoords);
-    vec3 lpos = normalize(lightPos);
+    float lightAngle = time / 3600.0 * 2 * PI;
+    vec3 lpos = normalize(vec3(cos(lightAngle), sin(lightAngle), 0.0));
     
     float coeiff = 0.25;
     vec3 totalSkyLight = vec3(0.3, 0.5, 1.0);
@@ -116,6 +120,7 @@ vec4 getSky() {
 	
 	color *=  (pow(1.0 - scatterMult, 10.0) * 10.0) + 1.0;
 	
+    if (lpos.y < 0.0f) lpos.y *= 7.0;
 	float underscatter = distance(lpos.y * 0.5 + 0.5, 1.0);
 	color = mix(color, vec3(0.0), clamp(underscatter, 0.0, 1.0));
 	
