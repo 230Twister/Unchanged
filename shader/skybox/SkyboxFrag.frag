@@ -43,24 +43,21 @@ float getDensity(vec3 pos) {
 // 计算体积云颜色
 vec4 getCloud() {
     vec3 direction = normalize(TexCoords - viewPos);
-    vec3 step = direction * 0.25;   // 步长
-    vec4 colorSum = vec4(0);        // 云的颜色积累
-    vec3 point = viewPos;           // 起始点
+    vec3 astep = direction * 0.25;      // 步长
+    vec4 colorSum = vec4(0);            // 云的颜色积累
+    vec3 point = viewPos;               // 起始点
 
-    // 跳过不是云层的位置，直接到达云层位置进行光线前进
-    if (point.y < bottom) {
-        point += direction * ((bottom - point.y) / abs(direction.y));
-    } else if (point.y > top) {
-        point += direction * ((point.y - top) / abs(direction.y));
-    }
+    // 跳过不是云层的位置，直接到达云层位置进行ray-marching
+    point += (1.0 - step(bottom, point.y)) * direction * ((bottom - point.y) / abs(direction.y));
+    point += step(top, point.y) * direction * ((point.y - top) / abs(direction.y));
 
     // 片段和摄像机之间没有云层
     if (length(TexCoords - viewPos) < length(point - viewPos)) {
         return colorSum;
     }
 
-    for (int i = 0; i < 100; i++) {
-        point += step;
+    for (int i = 0; i < 50; i++) {
+        point += astep;
         // 超出云层范围则直接跳出
         if (bottom > point.y || point.y > top 
             || -width > point.x || point.x > width 
@@ -79,7 +76,7 @@ vec4 getCloud() {
         
         colorSum += color * (1.0 - colorSum.a);
     }
-    colorSum *= mix(1.0, 0.15, clamp((time - 1800) * 0.01, 0.0, 1.0));
+    colorSum.rgb *= mix(1.0, 0.15, clamp((time - 1800) * 0.01, 0.0, 1.0));
     return colorSum;
 }
 
@@ -87,15 +84,22 @@ vec3 mie(float dist, vec3 sunL){
     return max(exp(-pow(dist, 0.25)) * sunL - 0.4, 0.0);
 }
 
+float getStarNoise(vec2 pos) {
+    float noise = texture2D(noisetex, pos).x;	
+	noise *= 0.975;
+    return noise;
+}
+
 // 经验公式渲染天空
 // https://www.shadertoy.com/view/4tVSRt
+// https://www.shadertoy.com/view/lsXGWH
 vec4 getSky() {
     vec3 pos = normalize(TexCoords);
     float lightAngle = time / 3600.0 * 2 * PI;
     vec3 lpos = normalize(vec3(cos(lightAngle), sin(lightAngle), 0.0));
     
     float coeiff = 0.25;
-    vec3 totalSkyLight = vec3(0.3, 0.5, 1.0);
+    vec3 totalSkyLight = vec3(0.3, 0.5, 1.0);   // 天空的基础颜色
     float sunDistance = acos(dot(pos, lpos)) * PI;
 
     float scatterMult = clamp(sunDistance, 0.0, 1.0);
@@ -108,11 +112,9 @@ vec4 getSky() {
 	dist = (coeiff * mix(scatterMult, 1.0, dist)) / dist;
     
     vec3 mieScatter = mie(sunDistance, vec3(1.1));
-	
 	vec3 color = dist * totalSkyLight;
     
     color = max(color, 0.0);
-
 	color = max(mix(pow(color, 1.0 - color),
 	color / (2.0 * color + 0.5 - color),
 	clamp(lpos.y * 4.0, 0.4, 1.0)), 0.0)
@@ -120,12 +122,27 @@ vec4 getSky() {
 	
 	color *=  (pow(1.0 - scatterMult, 10.0) * 10.0) + 1.0;
 	
-    if (lpos.y < 0.0f) lpos.y *= 7.0;
+    lpos.y += (1.0 - step(0.0, lpos.y)) * 8.0 * lpos.y;
 	float underscatter = distance(lpos.y * 0.5 + 0.5, 1.0);
 	color = mix(color, vec3(0.0), clamp(underscatter, 0.0, 1.0));
 	
     color /= (2.0 * color + 0.5 - color);
-    color.b += mix(0.0f, 0.2f, lpos.y);
+    color.b += mix(0.0f, 0.2f, step(0.0, lpos.y) * lpos.y);     // 调得蓝一点
+
+    // 月亮
+    lightAngle -= PI;
+    vec3 moonPos = normalize(vec3(cos(lightAngle), sin(lightAngle), 0.0));
+    float moonDistance = acos(dot(pos, moonPos)) * PI;
+    color += (1.0 - step(0.1, moonDistance));
+
+    // 星星
+    vec2 coord = TexCoords.xz * 0.005 + TexCoords.y * 0.008;
+    float star = pow(getStarNoise(coord), 40.0) * 20.0;
+    float r1 = getStarNoise(coord * getStarNoise(vec2(sin(time*0.001))));
+	float r2 = getStarNoise(coord * getStarNoise(vec2(cos(time*0.001), sin(time*0.001))));
+	float r3 = getStarNoise(coord * getStarNoise(vec2(sin(time*0.005), cos(time*0.005))));
+    color += mix(vec3(0.0), vec3(star * r1, star * r2, star * r3), 1 - step(0.0, lpos.y));
+     
 	return vec4(color, 1.0f);	
 }
 

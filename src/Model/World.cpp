@@ -247,7 +247,7 @@ void World::render() {
     }
     else{
         modelShader->setVec3("direction_light.ambient", glm::vec3(0.1f, 0.1f, 0.1f));
-        modelShader->setVec3("direction_light.diffuse", glm::vec3(0.2f, 0.2f, 0.2f));
+        modelShader->setVec3("direction_light.diffuse", glm::vec3(0.1f, 0.1f, 0.1f));
         modelShader->setVec3("direction_light.specular", glm::vec3(0.1f, 0.1f, 0.1f));
     }
 
