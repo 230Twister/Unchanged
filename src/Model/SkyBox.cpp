@@ -1,7 +1,10 @@
 #include "Model/SkyBox.h"
+#include "Util/FastNoiseLite.h"
 #include <glad/glad.h>
 #include <iostream>
+#define STB_IMAGE_WRITE_IMPLEMENTATION 
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 float SkyBox::skyboxVertices[108] = {
 		-400.0f,  400.0f, -400.0f,
@@ -48,37 +51,38 @@ float SkyBox::skyboxVertices[108] = {
 };
 
 SkyBox::SkyBox() {
-	skyboxShader = new Shader("../../../shader/SkyboxVert.vs", "../../../shader/SkyboxFrag.frag");
-	faces[0][0] = "../../../skybox_img/morning_right.jpg";
-	faces[0][1] = "../../../skybox_img/morning_left.jpg";
-	faces[0][2] = "../../../skybox_img/morning_top.jpg";
-	faces[0][3] = "../../../skybox_img/bottom.jpg";
-	faces[0][4] = "../../../skybox_img/morning_back.jpg";
-	faces[0][5] = "../../../skybox_img/morning_front.jpg";
+	skyboxShader = new Shader("../../../shader/skybox/SkyboxVert.vs", "../../../shader/skybox/SkyboxFrag.frag");
+	faces[0][0] = "../../../skybox/morning_right.jpg";
+	faces[0][1] = "../../../skybox/morning_left.jpg";
+	faces[0][2] = "../../../skybox/morning_top.jpg";
+	faces[0][3] = "../../../skybox/bottom.jpg";
+	faces[0][4] = "../../../skybox/morning_back.jpg";
+	faces[0][5] = "../../../skybox/morning_front.jpg";
 
-	faces[1][0] = "../../../skybox_img/midday_right.jpg";
-	faces[1][1] = "../../../skybox_img/midday_left.jpg";
-	faces[1][2] = "../../../skybox_img/midday_top.jpg";
-	faces[1][3] = "../../../skybox_img/bottom.jpg";
-	faces[1][4] = "../../../skybox_img/midday_back.jpg";
-	faces[1][5] = "../../../skybox_img/midday_front.jpg";
+	faces[1][0] = "../../../skybox/midday_right.jpg";
+	faces[1][1] = "../../../skybox/midday_left.jpg";
+	faces[1][2] = "../../../skybox/midday_top.jpg";
+	faces[1][3] = "../../../skybox/bottom.jpg";
+	faces[1][4] = "../../../skybox/midday_back.jpg";
+	faces[1][5] = "../../../skybox/midday_front.jpg";
 
-	faces[2][0] = "../../../skybox_img/dusk_right.jpg";
-	faces[2][1] = "../../../skybox_img/dusk_left.jpg";
-	faces[2][2] = "../../../skybox_img/dusk_top.jpg";
-	faces[2][3] = "../../../skybox_img/bottom.jpg";
-	faces[2][4] = "../../../skybox_img/dusk_back.jpg";
-	faces[2][5] = "../../../skybox_img/dusk_front.jpg";
+	faces[2][0] = "../../../skybox/dusk_right.jpg";
+	faces[2][1] = "../../../skybox/dusk_left.jpg";
+	faces[2][2] = "../../../skybox/dusk_top.jpg";
+	faces[2][3] = "../../../skybox/bottom.jpg";
+	faces[2][4] = "../../../skybox/dusk_back.jpg";
+	faces[2][5] = "../../../skybox/dusk_front.jpg";
 
-	faces[3][0] = "../../../skybox_img/night_right.jpg";
-	faces[3][1] = "../../../skybox_img/night_left.jpg";
-	faces[3][2] = "../../../skybox_img/night_top.jpg";
-	faces[3][3] = "../../../skybox_img/bottom.jpg";
-	faces[3][4] = "../../../skybox_img/night_back.jpg";
-	faces[3][5] = "../../../skybox_img/night_front.jpg";
+	faces[3][0] = "../../../skybox/night_right.jpg";
+	faces[3][1] = "../../../skybox/night_left.jpg";
+	faces[3][2] = "../../../skybox/night_top.jpg";
+	faces[3][3] = "../../../skybox/bottom.jpg";
+	faces[3][4] = "../../../skybox/night_back.jpg";
+	faces[3][5] = "../../../skybox/night_front.jpg";
 
 	loadSkybox();
 	loadCubemap();
+	loadNoiseTexture();
 }
 
 SkyBox::~SkyBox() {
@@ -134,6 +138,49 @@ void SkyBox::loadCubemap() {
 }
 
 /**
+ * @brief 导入噪声图纹理
+*/
+void SkyBox::loadNoiseTexture() {
+	srand((unsigned)time(0));
+
+	glGenTextures(1, &noiseTexture);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	FastNoiseLite noise;
+	noise.SetNoiseType(FastNoiseLite::NoiseType::NoiseType_Perlin);
+	noise.SetFrequency(0.09);
+	noise.SetSeed(rand());
+	const int NOISE_WIDTH = 512;
+	float* noiseData = new float[NOISE_WIDTH * NOISE_WIDTH];
+	int index = 0;
+	for (int y = 0; y < NOISE_WIDTH; y++)
+		for (int x = 0; x < NOISE_WIDTH; x++)
+			noiseData[index++] = noise.GetNoise((float)x, (float)y);
+	unsigned char* gen_img = new unsigned char[NOISE_WIDTH * NOISE_WIDTH * 3];
+	float fmax = noiseData[0], fmin = noiseData[0];
+	for (int i = 1; i < NOISE_WIDTH * NOISE_WIDTH; i++) {
+		fmax = std::max(fmax, noiseData[i]);
+		fmin = std::min(fmin, noiseData[i]);
+	}
+	float scale = 255 / (fmax - fmin);
+	for (int i = 0; i < NOISE_WIDTH * NOISE_WIDTH; i++) {
+		unsigned char value = (noiseData[i] - fmin) * scale;
+		gen_img[i * 3] = gen_img[i * 3 + 1] = gen_img[i * 3 + 2] = value;
+	}
+	stbi_write_png("test.png", NOISE_WIDTH, NOISE_WIDTH, 3, gen_img, 0);
+	delete[] noiseData;
+	delete[] gen_img;
+
+	int width, height, nrChannels;
+	unsigned char* image = stbi_load("test.png", &width, &height, &nrChannels, 3);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);   // 生成纹理
+	stbi_image_free(image);
+}
+
+/**
  * @brief 渲染天空盒
 */
 void SkyBox::renderSkybox(unsigned int time) {
@@ -151,8 +198,14 @@ void SkyBox::renderSkybox(unsigned int time) {
 		index = 3;
 	}
 	glBindVertexArray(skyboxVAO);
+
 	glActiveTexture(GL_TEXTURE0);
+	skyboxShader->setInt("skybox", 0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture[index]);
+	glActiveTexture(GL_TEXTURE1);
+	skyboxShader->setInt("noisetex", 1);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 	glDepthFunc(GL_LESS);

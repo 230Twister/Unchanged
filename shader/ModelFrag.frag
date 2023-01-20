@@ -44,7 +44,6 @@ uniform sampler2D texture_specular1;        // 高光贴图
 uniform sampler2DArray  texture_cascadeMap; // CSM深度贴图
 uniform sampler2D texture_spotShadowMap;    // 深度贴图
 uniform vec3 farBounds;                     // 视锥分割
-uniform bool dying;
 uniform samplerCube texture_shadowMap3;
 uniform float far_plane;
 uniform int time;
@@ -215,7 +214,10 @@ void main()
     // 环境光
     vec3 ambient = direction_light.ambient * model_diffuse;
 
-    vec3 result = ambient + getDirectionLight() + getSpotLight();
+    vec3 result = ambient + getDirectionLight();
+    if (spot_light.diffuse != 0.0f) {
+        result += getSpotLight();
+    }
     if (time > 1800) {
         result += getPointLight();
     }
@@ -228,9 +230,4 @@ void main()
     vec4 FogColor = vec4(direction_light.diffuse, 1.0f);
     float FogFactor = 1 - exp(-0.002 * dist);
     FragColor = mix(FragColor, FogColor, FogFactor);
-
-    if (dying) {
-        float average = 0.2126 * FragColor.r + 0.7152 * FragColor.g + 0.0722 * FragColor.b;
-        FragColor = vec4(average, average, average, 1.0f);
-    }
 }
