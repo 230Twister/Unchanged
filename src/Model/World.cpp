@@ -9,7 +9,7 @@
 #include <GLFW/glfw3.h>
 
 World::World(const char* world_obj) {
-    time = 00;
+    time = 0;
 
     // 初始化所有shader
     shadowMappingShader = new Shader("../../../shader/shadow/ShadowMappingVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag");
@@ -227,9 +227,9 @@ void World::render() {
     if (isDay){
         // 线性计算白天光线变化——经验公式
         int noon = DAY / 2;
-        float a_morning = 0.2f + (3.2f * currentTime) / DAY_TIME; // 1.0
-        float d_morning = 0.6f + (3.2f * currentTime) / DAY_TIME; // 1.4
-        float s_morning = 0.4f + (4.8f * currentTime) / DAY_TIME; // 1.6
+        float a_morning = 0.1f + (3.6f * currentTime) / DAY_TIME; // 1.0
+        float d_morning = 0.1f + (5.2f * currentTime) / DAY_TIME; // 1.4
+        float s_morning = 0.1f + (6.0f * currentTime) / DAY_TIME; // 1.6
         float a_afternoon = 2.05f - (4.0f * currentTime) / DAY_TIME;
         float d_afternoon = 2.6f - (4.8f * currentTime) / DAY_TIME;
         float s_afternoon = 3.25f - (6.4f * currentTime) / DAY_TIME;

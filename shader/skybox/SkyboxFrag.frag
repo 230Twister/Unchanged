@@ -77,6 +77,7 @@ vec4 getCloud() {
         colorSum += color * (1.0 - colorSum.a);
     }
     colorSum.rgb *= mix(1.0, 0.15, clamp((time - 1800) * 0.01, 0.0, 1.0));
+    colorSum.rgb *= mix(0.15, 1.0, clamp(time * 0.01, 0.0, 1.0));
     return colorSum;
 }
 
@@ -96,17 +97,17 @@ float getStarNoise(vec2 pos) {
 vec4 getSky() {
     vec3 pos = normalize(TexCoords);
     float lightAngle = time / 3600.0 * 2 * PI;
-    vec3 lpos = normalize(vec3(cos(lightAngle), sin(lightAngle), 0.0));
+    vec3 sunPos = normalize(vec3(cos(lightAngle), sin(lightAngle), 0.0));
     
     float coeiff = 0.25;
     vec3 totalSkyLight = vec3(0.3, 0.5, 1.0);   // 天空的基础颜色
-    float sunDistance = acos(dot(pos, lpos)) * PI;
+    float sunDistance = acos(dot(pos, sunPos)) * PI;
 
     float scatterMult = clamp(sunDistance, 0.0, 1.0);
 	float sun = clamp(1.0 - smoothstep(0.01, 0.11, scatterMult), 0.0, 1.0);
 
     float dist = pos.y;
-    float circleAng = dot(normalize(vec3(pos.x, 0.0, pos.z)), normalize(vec3(lpos.x, 0.0, lpos.z)));
+    float circleAng = dot(normalize(vec3(pos.x, 0.0, pos.z)), normalize(vec3(sunPos.x, 0.0, sunPos.z)));
     dist += mix(0.0f, 0.3f, clamp(1.0 - circleAng, 0.0f, 1.0f));
     dist = clamp(dist, 0.03, 0.8);
 	dist = (coeiff * mix(scatterMult, 1.0, dist)) / dist;
@@ -117,17 +118,17 @@ vec4 getSky() {
     color = max(color, 0.0);
 	color = max(mix(pow(color, 1.0 - color),
 	color / (2.0 * color + 0.5 - color),
-	clamp(lpos.y * 4.0, 0.4, 1.0)), 0.0)
+	clamp(sunPos.y * 4.0, 0.4, 1.0)), 0.0)
 	+ sun + mieScatter;
 	
 	color *=  (pow(1.0 - scatterMult, 10.0) * 10.0) + 1.0;
 	
-    lpos.y += (1.0 - step(0.0, lpos.y)) * 8.0 * lpos.y;
-	float underscatter = distance(lpos.y * 0.5 + 0.5, 1.0);
+    sunPos.y += (1.0 - step(0.0, sunPos.y)) * 7.5 * sunPos.y;
+	float underscatter = distance(sunPos.y * 0.5 + 0.5, 1.0);
 	color = mix(color, vec3(0.0), clamp(underscatter, 0.0, 1.0));
 	
     color /= (2.0 * color + 0.5 - color);
-    color.b += mix(0.0f, 0.2f, step(0.0, lpos.y) * lpos.y);     // 调得蓝一点
+    color.b += mix(0.0f, 0.2f, step(0.0, sunPos.y) * sunPos.y);     // 调得蓝一点
 
     // 月亮
     lightAngle -= PI;
@@ -141,7 +142,9 @@ vec4 getSky() {
     float r1 = getStarNoise(coord * getStarNoise(vec2(sin(time*0.001))));
 	float r2 = getStarNoise(coord * getStarNoise(vec2(cos(time*0.001), sin(time*0.001))));
 	float r3 = getStarNoise(coord * getStarNoise(vec2(sin(time*0.005), cos(time*0.005))));
-    color += mix(vec3(0.0), vec3(star * r1, star * r2, star * r3), 1 - step(0.0, lpos.y));
+    sunPos.y += step(0.0, sunPos.y) * 7.5 * sunPos.y;
+	underscatter = distance(clamp(sunPos.y * 0.5 + 0.5, 0.0, 1.0), 1.0);
+    color += mix(vec3(0.0), vec3(star * r1, star * r2, star * r3), clamp(underscatter, 0.0, 1.0));
      
 	return vec4(color, 1.0f);	
 }
