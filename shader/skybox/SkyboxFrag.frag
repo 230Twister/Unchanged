@@ -3,7 +3,6 @@ out vec4 FragColor;
 
 in vec3 TexCoords;
 
-uniform samplerCube skybox;
 uniform sampler2D noisetex;                 // 噪声图
 uniform vec3 viewPos;                       // 观察者位置
 uniform vec3 lightPos;                      // 太阳位置
@@ -19,23 +18,14 @@ uniform int time;                           // 游戏时间
 #define PI 3.1415926538
 
 float getDensity(vec3 pos) {
-    // 高度衰减
-    float mid = (bottom + top) / 2.0;
-    float h = top - bottom;
-    float weight = 1.0 - 2.0 * abs(mid - pos.y) / h;
-    weight = pow(weight, 0.5);
-
-    pos.x += time * 0.05;
+    pos.x += time * 0.05;   // 云朵飘动
     pos.x += 100; pos.z += 100;
-    vec2 coord = pos.xz * 0.0025;
-    float noise = texture2D(noisetex, coord).x;
-	noise += texture2D(noisetex, coord * 3.5).x / 3.5;
-	noise += texture2D(noisetex, coord * 12.25).x / 12.25;
-	noise += texture2D(noisetex, coord * 42.87).x / 42.87;	
-	noise /= 1.4472;
-    noise *= weight;
 
-    if (noise < 0.4) return 0;
+    vec2 coord = pos.xz * 0.0025;
+    float noise = texture2D(noisetex, coord).x;     // 采样
+    noise = clamp((noise - 0.4) / 0.6, 0.0, 1.0);   // 截断出体积云
+    noise *= texture2D(noisetex, coord).y;          // 另一张噪声图上采样增加细节
+    noise *= texture2D(noisetex, coord).z;
 
     return noise;
 }
@@ -51,13 +41,9 @@ vec4 getCloud() {
     point += (1.0 - step(bottom, point.y)) * direction * ((bottom - point.y) / abs(direction.y));
     point += step(top, point.y) * direction * ((point.y - top) / abs(direction.y));
 
-    // 片段和摄像机之间没有云层
-    if (length(TexCoords - viewPos) < length(point - viewPos)) {
-        return colorSum;
-    }
-
+    float scale = 1.0;
     for (int i = 0; i < 50; i++) {
-        point += astep;
+        point += astep * scale;
         // 超出云层范围则直接跳出
         if (bottom > point.y || point.y > top 
             || -width > point.x || point.x > width 
@@ -68,13 +54,14 @@ vec4 getCloud() {
         vec3 lightDir = normalize(lightPos - point);        // 光源方向
         float lightDensity = getDensity(point + lightDir);  // 向光源方向步进一步然后采样云层密度
         float delta = clamp(density - lightDensity, 0.0f, 1.0f);
-        density *= 0.7;
 
-        vec3 base = mix(baseBright, baseDark, density) * density;
+        vec3 base = mix(baseBright, baseDark, density) * (1 - exp(-density));
         vec3 light = mix(lightDark, lightBright, delta);
         vec4 color = vec4(base * light, density);
         
         colorSum += color * (1.0 - colorSum.a);
+
+        scale = mix(1.0f, 2.0f, exp(-density));
     }
     colorSum.rgb *= mix(1.0, 0.15, clamp((time - 1800) * 0.01, 0.0, 1.0));
     colorSum.rgb *= mix(0.15, 1.0, clamp(time * 0.01, 0.0, 1.0));

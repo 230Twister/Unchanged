@@ -14,5 +14,6 @@
 + bullet3
 
 下载模型：[地址](https://wwe.lanzouw.com/ifJ2Zxtnf7c)
+部分技术说明：[CSM](https://oscarsalon.top/2023/01/cascadedshadowmaps/)
 
 最后使用visual studio的cmake进行构建

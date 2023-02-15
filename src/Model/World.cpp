@@ -12,11 +12,11 @@ World::World(const char* world_obj) {
     time = 0;
 
     // 初始化所有shader
-    shadowMappingShader = new Shader("../../../shader/shadow/ShadowMappingVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag");
-    cascadedShadowShader = new Shader("../../../shader/shadow/CascadedShadowVert.vs", "../../../shader/shadow/ShadowMappingFrag.frag", "../../../shader/shadow/CascadedShadowGeo.gs");
-    shadowMappingPointShader = new Shader("../../../shader/shadow/ShadowMappingVertPoint.vs", "../../../shader/shadow/ShadowMappingFragPoint.frag", "../../../shader/shadow/ShadowMappingGPoint.gs");
-    modelShader = new Shader("../../../shader/ModelVert.vs", "../../../shader/ModelFrag.frag");
-    hdrShader = new Shader("../../../shader/HDRVert.vs", "../../../shader/HDRFrag.frag");
+    shadowMappingShader = new Shader("shader/shadow/ShadowMappingVert.vs", "shader/shadow/ShadowMappingFrag.frag");
+    cascadedShadowShader = new Shader("shader/shadow/CascadedShadowVert.vs", "shader/shadow/ShadowMappingFrag.frag", "shader/shadow/CascadedShadowGeo.gs");
+    shadowMappingPointShader = new Shader("shader/shadow/ShadowMappingVertPoint.vs", "shader/shadow/ShadowMappingFragPoint.frag", "shader/shadow/ShadowMappingGPoint.gs");
+    modelShader = new Shader("shader/ModelVert.vs", "shader/ModelFrag.frag");
+    hdrShader = new Shader("shader/HDRVert.vs", "shader/HDRFrag.frag");
 
     // 加载模型
     model = new Model(world_obj);
@@ -224,6 +224,7 @@ void World::render() {
     modelShader->setVec3("viewPos", camera->Position);
     modelShader->setVec3("direction_light.direction", ligh_dir);
     
+    float natureLight = 0.1f;
     if (isDay){
         // 线性计算白天光线变化——经验公式
         int noon = DAY / 2;
@@ -235,11 +236,13 @@ void World::render() {
         float s_afternoon = 3.25f - (6.4f * currentTime) / DAY_TIME;
         if (currentTime < noon)
         {
+            natureLight = a_morning;
             modelShader->setVec3("direction_light.ambient", glm::vec3(a_morning, a_morning, a_morning));
             modelShader->setVec3("direction_light.diffuse", glm::vec3(d_morning, d_morning, d_morning));
             modelShader->setVec3("direction_light.specular", glm::vec3(s_morning, s_morning, s_morning));
         }
         else{
+            natureLight = a_afternoon;
             modelShader->setVec3("direction_light.ambient", glm::vec3(a_afternoon, a_afternoon, a_afternoon));
             modelShader->setVec3("direction_light.diffuse", glm::vec3(d_afternoon, d_afternoon, d_afternoon));
             modelShader->setVec3("direction_light.specular", glm::vec3(s_afternoon, s_afternoon, s_afternoon));
@@ -317,6 +320,7 @@ void World::render() {
     water->waterShader->setMat4("model", glm::mat4(1.0f));
     water->waterShader->setFloat("time", (float)glfwGetTime());
     // Set fragment shader data
+    water->waterShader->setVec3("light", glm::vec3(natureLight));
     water->waterShader->setVec3("viewPos", camera->Position);
     water->waterShader->setVec3("deepWaterColor", glm::vec3(0.1137f, 0.2745f, 0.4392f));
     water->waterShader->setVec3("lightDir", ligh_dir);

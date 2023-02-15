@@ -13,14 +13,11 @@ public:
 
 private:
 	void loadSkybox();
-	void loadCubemap();
 	void loadNoiseTexture();
 	unsigned int skyboxVAO;
 	unsigned int skyboxVBO;
-	unsigned int cubemapTexture[4];
 	unsigned int noiseTexture;
 	static float skyboxVertices[108];
-	std::string faces[4][6];
 };
 
 #endif // SKYBOX_H

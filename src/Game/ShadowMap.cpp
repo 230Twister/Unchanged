@@ -153,6 +153,7 @@ void ShadowMap::generateLightSpaceMatrix(glm::vec3& lightDir) {
 		}
 		aabb_max.z += 100.f;
 
+		// 生成一个正交投影矩阵
 		glm::mat4 ortho = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, -aabb_max.z, -aabb_min.z);
 		glm::mat4 pv = ortho * viewMat;
 
