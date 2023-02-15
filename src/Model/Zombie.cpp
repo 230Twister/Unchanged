@@ -12,7 +12,7 @@ Zombie::Zombie(glm::vec3 pos, float y) {
 }
 
 void Zombie::init() {
-	model = new Model("../../../world_model/player/zb.obj");
+	model = new Model("world_model/player/zb.obj");
 }
 
 /**

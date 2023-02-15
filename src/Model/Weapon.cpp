@@ -2,7 +2,7 @@
 
 Weapon::Weapon()
 {
-	model = new Model("../../../world_model/weapon/weapon.obj");
+	model = new Model("world_model/weapon/weapon.obj");
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	yaw = 0.0f;
 	angle = 0.0f;

@@ -4,7 +4,7 @@
 
 Player::Player() {
 	camera = new Camera(glm::vec3(0.0f, 50.0f, 0.0f));
-	model = new Model("../../../world_model/player/player.obj");
+	model = new Model("world_model/player/player.obj");
 	knife = new Weapon;
 	position = glm::vec3(0.0f, 0.0f, 0.0f);
 	health = 100;

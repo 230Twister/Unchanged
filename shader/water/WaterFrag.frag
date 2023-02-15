@@ -15,7 +15,7 @@ uniform vec3 deepWaterColor;
 uniform int waveMapCount;
 uniform sampler2D waveMaps[5];
 
-uniform samplerCube skybox;
+uniform vec3 light;
 
 void main()
 {
@@ -41,8 +41,8 @@ void main()
     }
 
     // Reflection color component
-    vec4 r = texture(skybox, reflectVec);
-    // vec4 r = vec4(1.0, 1.0, 1.0, 1.0);
+    // vec4 r = texture(skybox, reflectVec);
+    vec4 r = vec4(light, 1.0);
 
     // Transmission color component
     vec4 t = vec4(deepWaterColor, 0.6);
